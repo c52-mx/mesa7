@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "accounts",
     "tenants",
     "menu",
+    "orders",
 ]
 
 MIDDLEWARE = [
