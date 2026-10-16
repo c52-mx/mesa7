@@ -4,12 +4,15 @@ from .models import Membership
 
 
 def resolve_membership(request):
-    """Membresía de la petición: header X-Tenant (slug), o la única del usuario.
+    return membership_for(request.user, request.headers.get("X-Tenant"))
+
+
+def membership_for(user, slug=None):
+    """Membresía del usuario: la del tenant `slug` (header X-Tenant), o la única que tenga.
 
     Solo acepta tenants en los que el usuario tiene membresía.
     """
-    memberships = request.user.memberships.filter(tenant__is_active=True).select_related("tenant")
-    slug = request.headers.get("X-Tenant")
+    memberships = user.memberships.filter(tenant__is_active=True).select_related("tenant")
     if slug:
         membership = memberships.filter(tenant__slug=slug).first()
         if membership is None:

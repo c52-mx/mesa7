@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from accounts.views import LoginView, RegisterView
+from accounts.views import LoginView, RegisterView, devices
 from menu.views import branch_menu, branches
 
 from orders.views import kds_orders, kds_set_status, order_detail, orders
@@ -15,6 +15,7 @@ urlpatterns = [
     path("api/auth/register/", RegisterView.as_view()),
     path("api/auth/login/", LoginView.as_view()),
     path("api/auth/token/refresh/", TokenRefreshView.as_view()),
+    path("api/devices/", devices),
     path("api/branches/", branches),
     path("api/branches/<int:branch_id>/menu/", branch_menu),
     path("api/orders/", orders),

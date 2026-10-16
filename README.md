@@ -13,7 +13,14 @@ docker compose exec backend python manage.py test
 
 - Health check: `GET /api/health/`
 - Admin: `/admin/`
-- JWT: `POST /api/auth/token/` y `/api/auth/token/refresh/`
+- Auth: `POST /api/auth/register/`, `/api/auth/login/`, `/api/auth/token/refresh/`
+- Si el usuario pertenece a varios negocios, enviar el header `X-Tenant: <slug>`
+- Pedidos: `/api/orders/`, KDS: `/api/kds/orders/?branch=<id>`, push: `POST /api/devices/`
+- WebSocket (`/ws/orders/<id>/` cliente, `/ws/kds/<branch_id>/` personal): al conectar, el primer
+  mensaje es `{"type": "auth", "token": "<access JWT>", "tenant": "<slug>"}`; el servidor responde
+  `{"type": "ready"}` y luego envía `{"type": "order.update", "order": {...}}`.
+  Cierres: 4401 (token inválido o sin auth en 10 s), 4403 (sin permiso).
+- Demo: `docker compose exec backend python manage.py seed_demo`
 
 ```bash
 cd mobile

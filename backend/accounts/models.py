@@ -37,3 +37,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class DeviceToken(models.Model):
+    """Token de Expo Push de un dispositivo. Es de la cuenta, no de un negocio."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="device_tokens")
+    token = models.CharField(max_length=200, unique=True)
+    platform = models.CharField(max_length=10, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user} ({self.platform})"

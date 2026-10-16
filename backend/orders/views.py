@@ -1,6 +1,5 @@
 from django.db import transaction
 from django.http import Http404
-from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,6 +8,7 @@ from tenants.api import resolve_staff_tenant, resolve_tenant
 from tenants.models import Branch
 
 from .models import Order
+from .payloads import order_payload
 from .services import change_status, create_order
 
 
@@ -21,38 +21,6 @@ class OrderCreateSerializer(serializers.Serializer):
     branch = serializers.IntegerField()
     items = ItemSerializer(many=True, allow_empty=False, max_length=50)
     notes = serializers.CharField(required=False, allow_blank=True, max_length=500)
-
-
-def semaphore(order, now):
-    """Verde mientras no pase el tiempo estimado; amarillo hasta +50 %; rojo después."""
-    if order.status not in Order.IN_KITCHEN:
-        return "green"
-    ratio = (now - order.created_at).total_seconds() / 60 / max(order.prep_minutes, 1)
-    return "green" if ratio <= 1 else "yellow" if ratio <= 1.5 else "red"
-
-
-def order_payload(order, kds=False):
-    now = timezone.now()
-    data = {
-        "id": order.pk,
-        "status": order.status,
-        "branch": order.branch_id,
-        "total": str(order.total),
-        "notes": order.notes,
-        "created_at": order.created_at,
-        "status_changed_at": order.status_changed_at,
-        "estimated_ready_at": order.estimated_ready_at,
-        "items": [
-            {"product": i.product_id, "name": i.name, "quantity": i.quantity, "unit_price": str(i.unit_price)}
-            for i in order.items.all()
-        ],
-    }
-    if kds:
-        data["customer"] = order.customer.full_name or order.customer.email
-        data["elapsed_seconds"] = int((now - order.created_at).total_seconds())
-        data["prep_minutes"] = order.prep_minutes
-        data["semaphore"] = semaphore(order, now)
-    return data
 
 
 def _orders(tenant):

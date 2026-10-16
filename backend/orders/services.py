@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from menu.models import BranchProduct, Product
 
 from .models import Order, OrderItem
+from .realtime import publish_order
 
 # Pedidos que la cocina prepara en paralelo (baristas/estaciones). Ajustable por sucursal más adelante.
 KITCHEN_CONCURRENCY = 2
@@ -80,6 +81,8 @@ def create_order(*, tenant, branch, customer, items, notes=""):
             for p, qty in lines
         ]
     )
+    # lambda y no partial: con robust=True Django lee func.__qualname__ al registrar el error.
+    transaction.on_commit(lambda: publish_order(order.pk), robust=True)
     return order
 
 
@@ -89,4 +92,5 @@ def change_status(order, new_status):
     order.status = new_status
     order.status_changed_at = timezone.now()
     order.save(update_fields=["status", "status_changed_at"])
+    transaction.on_commit(lambda: publish_order(order.pk, push=True), robust=True)
     return order
