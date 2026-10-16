@@ -17,6 +17,9 @@ class TenantQuerySet(models.QuerySet):
     def for_tenant(self, tenant):
         return self.filter(tenant=tenant)
 
+    def for_tenant_ids(self, tenant_ids):
+        return self.filter(tenant_id__in=tenant_ids)
+
 
 class TenantModel(models.Model):
     """Base de toda tabla de negocio: lleva tenant_id y se filtra siempre por tenant."""
@@ -33,6 +36,8 @@ class TenantModel(models.Model):
 
     def clean(self):
         super().clean()
+        if self.tenant_id is None:  # el admin asigna el tenant después de validar el formulario
+            return
         for name in self.tenant_fk_fields:
             related = getattr(self, name, None)
             if related is not None and related.tenant_id != self.tenant_id:
@@ -78,9 +83,7 @@ class Branch(TenantModel):
         return self.name
 
 
-def get_tenant(user):
-    """Tenant del usuario (primer membership), o None."""
-    if not user or not user.is_authenticated:
-        return None
-    membership = user.memberships.select_related("tenant").first()
-    return membership.tenant if membership else None
+def user_tenant_ids(user):
+    return list(
+        user.memberships.filter(tenant__is_active=True).values_list("tenant_id", flat=True)
+    )

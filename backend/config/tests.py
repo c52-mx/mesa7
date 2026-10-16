@@ -9,6 +9,6 @@ class HealthTests(TestCase):
 
     def test_token_rejects_bad_credentials(self):
         response = self.client.post(
-            "/api/auth/token/", {"username": "nadie", "password": "x"}
+            "/api/auth/login/", {"email": "nadie@x.com", "password": "x"}
         )
         self.assertEqual(response.status_code, 401)

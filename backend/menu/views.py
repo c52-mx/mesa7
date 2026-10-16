@@ -2,28 +2,22 @@ from django.http import Http404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from tenants.models import Branch, get_tenant
+from tenants.api import resolve_tenant
+from tenants.models import Branch
 
 from .models import BranchProduct, Product
 
 
-def _tenant_or_404(request):
-    tenant = get_tenant(request.user)
-    if tenant is None:
-        raise Http404
-    return tenant
-
-
 @api_view(["GET"])
 def branches(request):
-    tenant = _tenant_or_404(request)
+    tenant = resolve_tenant(request)
     qs = Branch.objects.for_tenant(tenant).filter(is_active=True).order_by("name")
     return Response([{"id": b.id, "name": b.name, "address": b.address} for b in qs])
 
 
 @api_view(["GET"])
 def branch_menu(request, branch_id):
-    tenant = _tenant_or_404(request)
+    tenant = resolve_tenant(request)
     try:
         branch = Branch.objects.for_tenant(tenant).get(pk=branch_id, is_active=True)
     except Branch.DoesNotExist:

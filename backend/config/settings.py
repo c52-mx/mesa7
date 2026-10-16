@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "channels",
+    "accounts",
     "tenants",
     "menu",
 ]
@@ -95,7 +96,10 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_THROTTLE_RATES": {"login": "20/min", "register": "10/min"},
 }
+
+AUTH_USER_MODEL = "accounts.User"
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),

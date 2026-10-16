@@ -12,7 +12,7 @@ class AdminScopingTests(TestCase):
         cls.own = Branch.objects.create(tenant=cls.t1, name="Propia")
         cls.foreign = Branch.objects.create(tenant=cls.t2, name="Ajena")
         cls.staff = get_user_model().objects.create_user(
-            "staff", password="x", is_staff=True
+            "staff@x.com", password="x", is_staff=True
         )
         Membership.objects.create(user=cls.staff, tenant=cls.t1, role="owner")
 

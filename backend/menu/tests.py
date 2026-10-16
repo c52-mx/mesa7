@@ -14,7 +14,7 @@ class MenuTests(TestCase):
         User = get_user_model()
         cls.t1 = Tenant.objects.create(name="Café Uno", slug="uno")
         cls.t2 = Tenant.objects.create(name="Café Dos", slug="dos")
-        cls.user = User.objects.create_user("ana", password="x")
+        cls.user = User.objects.create_user("ana@x.com", password="x")
         Membership.objects.create(user=cls.user, tenant=cls.t1)
         cls.b1 = Branch.objects.create(tenant=cls.t1, name="Centro")
         cls.b2 = Branch.objects.create(tenant=cls.t1, name="Norte")
