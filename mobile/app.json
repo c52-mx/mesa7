@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Mesa7",
+    "slug": "mesa7",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "mesa7",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
