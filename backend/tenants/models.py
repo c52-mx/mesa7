@@ -1,12 +1,20 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
+
+
+hex_color = RegexValidator(r"^#[0-9a-fA-F]{6}$", "Usa un color hexadecimal como #F07830.")
 
 
 class Tenant(models.Model):
     name = models.CharField(max_length=120)
     slug = models.SlugField(unique=True)
     is_active = models.BooleanField(default=True)
+    # Marca blanca: la app toma estos valores del tenant; el resto del tema se deriva en la app.
+    primary_color = models.CharField(max_length=7, default="#171717", validators=[hex_color])
+    secondary_color = models.CharField(max_length=7, default="#F5F5F5", validators=[hex_color])
+    logo_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

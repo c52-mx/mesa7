@@ -28,6 +28,14 @@ npm install
 npx expo start
 ```
 
+Para probar en el teléfono: instala **Expo Go**, conecta teléfono y computadora a la misma wifi y escanea el QR.
+La app usa la API de staging por defecto; para usar tu backend local copia `mobile/.env.example` a
+`mobile/.env.local` y pon `EXPO_PUBLIC_API_URL=http://<IP de tu computadora>:8000`
+(y agrega esa IP a `DJANGO_ALLOWED_HOSTS`). `EXPO_PUBLIC_TENANT` elige el negocio (por defecto `demo`).
+
+Marca blanca: el color principal, el secundario y el logo viven en el tenant (admin de Django) y la app
+los lee de `GET /api/tenants/<slug>/`; el resto del tema se deriva de esos dos colores.
+
 ## Despliegue (Dokploy)
 
 El backend se despliega desde `backend/Dockerfile` (Daphne/ASGI, puerto 8000). Variables requeridas:

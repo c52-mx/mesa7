@@ -32,3 +32,26 @@ class AdminScopingTests(TestCase):
         self.client.force_login(self.staff)
         self.client.post("/admin/tenants/branch/add/", {"name": "Nueva", "is_active": "on"})
         self.assertEqual(Branch.objects.get(name="Nueva").tenant, self.t1)
+
+
+class BrandingTests(TestCase):
+    def test_public_branding_without_auth(self):
+        Tenant.objects.create(
+            name="Cafecín", slug="cafecin", primary_color="#F07830", secondary_color="#781818"
+        )
+        data = self.client.get("/api/tenants/cafecin/").json()
+        self.assertEqual(data["primary_color"], "#F07830")
+        self.assertEqual(data["name"], "Cafecín")
+        self.assertNotIn("id", data)
+
+    def test_inactive_or_unknown_tenant_is_404(self):
+        Tenant.objects.create(name="Off", slug="off", is_active=False)
+        self.assertEqual(self.client.get("/api/tenants/off/").status_code, 404)
+        self.assertEqual(self.client.get("/api/tenants/nope/").status_code, 404)
+
+    def test_invalid_color_is_rejected(self):
+        from django.core.exceptions import ValidationError
+
+        tenant = Tenant(name="X", slug="x", primary_color="naranja")
+        with self.assertRaises(ValidationError):
+            tenant.full_clean()

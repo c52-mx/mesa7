@@ -1,0 +1,96 @@
+import { API_URL, TENANT_SLUG } from "./config";
+
+export type Tokens = { access: string; refresh: string };
+export type Membership = { tenant: string; name: string; role: string };
+export type Branding = {
+  slug: string;
+  name: string;
+  primary_color: string;
+  secondary_color: string;
+  logo_url: string;
+};
+export type Branch = { id: number; name: string; address: string };
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public data: unknown,
+  ) {
+    super(`API ${status}`);
+  }
+}
+
+// Sesión actual: la fija AuthProvider; el cliente renueva el access token solo.
+let tokens: Tokens | null = null;
+let onTokens: (t: Tokens | null) => void = () => {};
+
+export function setSession(next: Tokens | null, listener?: (t: Tokens | null) => void) {
+  tokens = next;
+  if (listener) onTokens = listener;
+}
+
+type Options = { method?: string; body?: unknown; auth?: boolean };
+
+async function send(path: string, { method = "GET", body, auth = true }: Options) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (auth && tokens) {
+    headers.Authorization = `Bearer ${tokens.access}`;
+    headers["X-Tenant"] = TENANT_SLUG;
+  }
+  return fetch(`${API_URL}${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+async function refreshAccess(): Promise<boolean> {
+  if (!tokens) return false;
+  const response = await send("/api/auth/token/refresh/", {
+    method: "POST",
+    body: { refresh: tokens.refresh },
+    auth: false,
+  });
+  if (!response.ok) return false;
+  const data = (await response.json()) as { access: string; refresh?: string };
+  tokens = { access: data.access, refresh: data.refresh ?? tokens.refresh };
+  onTokens(tokens);
+  return true;
+}
+
+export async function api<T>(path: string, options: Options = {}): Promise<T> {
+  let response = await send(path, options);
+  if (response.status === 401 && options.auth !== false && (await refreshAccess())) {
+    response = await send(path, options);
+  }
+  if (response.status === 401 && options.auth !== false) {
+    tokens = null;
+    onTokens(null);
+  }
+  const text = await response.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // Respuesta que no es JSON (por ejemplo un 500 con HTML): se trata como error sin detalle.
+  }
+  if (!response.ok) throw new ApiError(response.status, data);
+  return data as T;
+}
+
+/** Texto para mostrar al usuario a partir de cualquier error. */
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 429) return "Demasiados intentos. Espera un minuto e inténtalo de nuevo.";
+    if (error.status === 401) return "Correo o contraseña incorrectos.";
+    const data = error.data;
+    if (data && typeof data === "object") {
+      const messages = Object.values(data as Record<string, unknown>).flat().filter(
+        (m): m is string => typeof m === "string",
+      );
+      if (messages.length) return messages.join(" ");
+    }
+    return "Ocurrió un error. Inténtalo de nuevo.";
+  }
+  return "No se pudo conectar con el servidor. Revisa tu conexión.";
+}

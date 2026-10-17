@@ -1,21 +1,31 @@
 import "../../global.css";
 
-import { NAV_THEME } from "@/lib/theme";
-import { PortalHost } from "@rn-primitives/portal";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { BrandProvider } from "@/lib/brand-provider";
 import { Stack } from "expo-router";
-import { ThemeProvider } from "expo-router/react-navigation";
-import { StatusBar } from "expo-status-bar";
-import { useColorScheme } from "nativewind";
 
-export default function RootLayout() {
-  const { colorScheme } = useColorScheme();
-  const scheme = colorScheme === "dark" ? "dark" : "light";
+function RootNavigator() {
+  const { session, loading } = useAuth();
+  if (loading) return null;
 
   return (
-    <ThemeProvider value={NAV_THEME[scheme]}>
-      <StatusBar style={scheme === "dark" ? "light" : "dark"} />
-      <Stack />
-      <PortalHost />
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!session}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <BrandProvider>
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
+    </BrandProvider>
   );
 }

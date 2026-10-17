@@ -36,7 +36,15 @@ class Command(BaseCommand):
     help = "Crea (o actualiza) un tenant demo de cafetería. Es idempotente."
 
     def handle(self, *args, **options):
-        tenant, _ = Tenant.objects.get_or_create(slug="demo", defaults={"name": "Café Demo"})
+        tenant, _ = Tenant.objects.update_or_create(
+            slug="demo",
+            defaults={
+                "name": "Café Demo",
+                # Paleta de Cafecín (naranja del logo y vino de la bufanda)
+                "primary_color": "#F07830",
+                "secondary_color": "#781818",
+            },
+        )
         branches = {
             name: Branch.objects.get_or_create(
                 tenant=tenant, name=name, defaults={"address": address}

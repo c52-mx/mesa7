@@ -1,6 +1,30 @@
+from django.http import Http404
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.exceptions import NotFound, ParseError, PermissionDenied
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
-from .models import Membership
+from .models import Membership, Tenant
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def tenant_branding(request, slug):
+    """Marca pública del negocio: la app la necesita antes de que el usuario inicie sesión."""
+    try:
+        tenant = Tenant.objects.get(slug=slug, is_active=True)
+    except Tenant.DoesNotExist:
+        raise Http404
+    return Response(
+        {
+            "slug": tenant.slug,
+            "name": tenant.name,
+            "primary_color": tenant.primary_color,
+            "secondary_color": tenant.secondary_color,
+            "logo_url": tenant.logo_url,
+        }
+    )
 
 
 def resolve_membership(request):
