@@ -13,17 +13,20 @@ export function AuthScreen({ title, children }: { title: string; children: React
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerClassName="flex-grow justify-center gap-6 p-6"
+        contentContainerClassName="flex-grow items-center justify-center p-6"
         keyboardShouldPersistTaps="handled"
       >
-        <View className="items-center gap-3">
-          {brand.logo_url ? (
-            <Image source={{ uri: brand.logo_url }} className="h-28 w-28" resizeMode="contain" />
-          ) : null}
-          <Text className="text-3xl font-bold text-primary">{brand.name}</Text>
-          <Text className="text-lg text-muted-foreground">{title}</Text>
+        {/* Ancho máximo: en tablet o web el formulario no se estira a toda la pantalla. */}
+        <View className="w-full max-w-md gap-6">
+          <View className="items-center gap-3">
+            {brand.logo_url ? (
+              <Image source={{ uri: brand.logo_url }} className="h-28 w-28" resizeMode="contain" />
+            ) : null}
+            <Text className="text-3xl font-bold">{brand.name}</Text>
+            <Text className="text-lg text-muted-foreground">{title}</Text>
+          </View>
+          {children}
         </View>
-        {children}
       </ScrollView>
     </KeyboardAvoidingView>
   );

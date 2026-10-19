@@ -43,25 +43,27 @@ export default function Branches() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="gap-4 p-4">
-      <Text className="text-xl font-semibold">Elige tu sucursal</Text>
-      {branches.length === 0 ? (
-        <Text className="text-muted-foreground">Este negocio aún no tiene sucursales activas.</Text>
-      ) : (
-        branches.map((branch) => (
-          <Card key={branch.id}>
-            <CardHeader>
-              <CardTitle>{branch.name}</CardTitle>
-              {branch.address ? <CardDescription>{branch.address}</CardDescription> : null}
-            </CardHeader>
-            <CardContent>
-              <Button disabled>
-                <Text>Ver menú (próximamente)</Text>
-              </Button>
-            </CardContent>
-          </Card>
-        ))
-      )}
+    <ScrollView className="flex-1 bg-background" contentContainerClassName="items-center p-4">
+      <View className="w-full max-w-md gap-4">
+        <Text className="text-xl font-semibold">Elige tu sucursal</Text>
+        {branches.length === 0 ? (
+          <Text className="text-muted-foreground">Este negocio aún no tiene sucursales activas.</Text>
+        ) : (
+          branches.map((branch) => (
+            <Card key={branch.id}>
+              <CardHeader>
+                <CardTitle>{branch.name}</CardTitle>
+                {branch.address ? <CardDescription>{branch.address}</CardDescription> : null}
+              </CardHeader>
+              <CardContent>
+                <Button disabled>
+                  <Text>Ver menú (próximamente)</Text>
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </View>
     </ScrollView>
   );
 }

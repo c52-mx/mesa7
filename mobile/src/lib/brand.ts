@@ -37,6 +37,15 @@ export function onColor(background: string): string {
   return contrast(background, "#FFFFFF") >= contrast(background, "#1A1A1A") ? "#FFFFFF" : "#1A1A1A";
 }
 
+/** Oscurece `color` (mezclándolo con negro) hasta lograr el contraste mínimo contra `background`. */
+function darkenUntil(color: string, background: string, minContrast: number): string {
+  let result = color;
+  for (let t = 0.1; contrast(result, background) < minContrast && t <= 1; t += 0.1) {
+    result = mix(color, "#000000", t);
+  }
+  return result;
+}
+
 export type Palette = Record<
   | "background" | "foreground" | "card" | "cardForeground" | "popover" | "popoverForeground"
   | "primary" | "primaryForeground" | "secondary" | "secondaryForeground"
@@ -49,8 +58,10 @@ export function brandPalette(primary: string, secondary: string, mode: "light" |
   const white = "#FFFFFF";
   const black = "#000000";
   if (mode === "light") {
-    const foreground = mix(secondary, black, 0.65);
-    const border = mix(secondary, white, 0.88);
+    // El texto y los bordes se derivan del secundario pero siempre legibles, aunque el negocio
+    // configure un secundario claro.
+    const foreground = darkenUntil(mix(secondary, black, 0.65), white, 12);
+    const border = mix(foreground, white, 0.78);
     return {
       background: white,
       foreground,
@@ -62,8 +73,8 @@ export function brandPalette(primary: string, secondary: string, mode: "light" |
       primaryForeground: onColor(primary),
       secondary,
       secondaryForeground: onColor(secondary),
-      muted: mix(secondary, white, 0.94),
-      mutedForeground: mix(secondary, white, 0.3),
+      muted: mix(foreground, white, 0.95),
+      mutedForeground: darkenUntil(mix(secondary, white, 0.3), white, 4.5),
       accent: mix(primary, white, 0.85),
       accentForeground: foreground,
       destructive: "#DC2626",
