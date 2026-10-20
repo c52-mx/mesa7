@@ -1,3 +1,4 @@
+import { useAuth } from "@/lib/auth";
 import { useBrand, usePalette } from "@/lib/brand-provider";
 import { useCart } from "@/lib/cart";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -17,6 +18,11 @@ export default function TabsLayout() {
   const brand = useBrand();
   const palette = usePalette();
   const cart = useCart();
+  const { isStaff } = useAuth();
+
+  // Las pestañas que no corresponden al rol se ocultan (href: null), no se eliminan.
+  const customer = isStaff ? null : undefined;
+  const staff = isStaff ? undefined : null;
 
   return (
     <Tabs
@@ -27,8 +33,8 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: palette.card, borderTopColor: palette.border },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Inicio", tabBarIcon: icon("home", "home-outline") }} />
-      <Tabs.Screen name="order" options={{ title: "Ordena", tabBarIcon: icon("cafe", "cafe-outline") }} />
+      <Tabs.Screen name="index" options={{ title: "Inicio", tabBarIcon: icon("home", "home-outline"), href: customer }} />
+      <Tabs.Screen name="order" options={{ title: "Ordena", tabBarIcon: icon("cafe", "cafe-outline"), href: customer }} />
       {/* El contador está siempre a la vista, igual que en Uber Eats. */}
       <Tabs.Screen
         name="cart"
@@ -37,6 +43,7 @@ export default function TabsLayout() {
           tabBarIcon: icon("cart", "cart-outline"),
           tabBarBadge: cart.count > 0 ? cart.count : undefined,
           tabBarBadgeStyle: { backgroundColor: palette.primary, color: palette.primaryForeground },
+          href: customer,
         }}
       />
       {/* Si el negocio apaga la lealtad, la pestaña desaparece. */}
@@ -45,7 +52,16 @@ export default function TabsLayout() {
         options={{
           title: "Mi tarjeta",
           tabBarIcon: icon("qr-code", "qr-code-outline"),
-          href: brand.loyalty_enabled ? undefined : null,
+          href: !isStaff && brand.loyalty_enabled ? undefined : null,
+        }}
+      />
+      <Tabs.Screen name="kds" options={{ title: "Pedidos", tabBarIcon: icon("receipt", "receipt-outline"), href: staff }} />
+      <Tabs.Screen
+        name="caja"
+        options={{
+          title: "Caja",
+          tabBarIcon: icon("scan", "scan-outline"),
+          href: isStaff && brand.loyalty_enabled ? undefined : null,
         }}
       />
       <Tabs.Screen name="profile" options={{ title: "Perfil", tabBarIcon: icon("person", "person-outline") }} />

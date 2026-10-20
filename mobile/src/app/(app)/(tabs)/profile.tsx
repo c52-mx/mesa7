@@ -1,4 +1,5 @@
 import { KeyboardScrollView } from "@/components/keyboard-scroll-view";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function Profile() {
-  const { logout } = useAuth();
+  const { logout, isStaff } = useAuth();
   const cart = useCart();
   const { data: me, error, loading, reload } = useApi<Me>("/api/me/");
   const [fullName, setFullName] = useState("");
@@ -70,6 +71,11 @@ export default function Profile() {
             <Text className="text-3xl font-bold text-primary-foreground">{initial}</Text>
           </View>
           <Text className="text-muted-foreground">{me.email}</Text>
+          {isStaff ? (
+            <Badge variant="secondary">
+              <Text>Personal del negocio</Text>
+            </Badge>
+          ) : null}
         </View>
 
         <Card>

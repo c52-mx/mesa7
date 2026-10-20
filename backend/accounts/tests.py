@@ -98,3 +98,29 @@ class CommandTests(TestCase):
         user = User.objects.get(email="admin@x.com")
         self.assertTrue(user.is_superuser)
         self.assertFalse(user.is_active)  # no se tocó el existente
+
+class EnsureStaffTests(TestCase):
+    def test_creates_staff_once_and_never_resets_the_password(self):
+        import os
+        from unittest import mock
+
+        Tenant.objects.create(name="Cafecín", slug="cafecin")
+        env = {"DJANGO_STAFF_EMAIL": "Caja@X.com", "DJANGO_STAFF_PASSWORD": "pw-1"}
+        with mock.patch.dict(os.environ, env):
+            call_command("ensure_staff")
+            user = User.objects.get(email="caja@x.com")
+            user.set_password("cambiada")
+            user.save()
+            call_command("ensure_staff")
+        user = User.objects.get(email="caja@x.com")
+        self.assertTrue(user.check_password("cambiada"))
+        self.assertEqual(Membership.objects.get(user=user).role, "staff")
+
+    def test_skips_when_variables_or_tenant_are_missing(self):
+        import os
+        from unittest import mock
+
+        with mock.patch.dict(os.environ, {"DJANGO_STAFF_EMAIL": "a@x.com", "DJANGO_STAFF_PASSWORD": "x"}):
+            call_command("ensure_staff")  # el negocio no existe
+        self.assertFalse(User.objects.filter(email="a@x.com").exists())
+        call_command("ensure_staff")  # sin variables

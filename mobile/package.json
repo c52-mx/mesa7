@@ -12,6 +12,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "~57.0.30",
+    "expo-build-properties": "~57.0.22",
+    "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.21",
     "expo-device": "~57.0.2",
     "expo-font": "~57.0.4",

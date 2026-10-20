@@ -12,6 +12,8 @@ type AuthContextValue = {
   session: Session | null;
   /** true mientras se restaura la sesión guardada al abrir la app. */
   loading: boolean;
+  /** Dueño o staff de este negocio: ve el modo personal (pedidos y caja). */
+  isStaff: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; full_name?: string; phone?: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -109,9 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
-  const value = useMemo(
-    () => ({ session, loading, login, register, logout: clear }),
-    [session, loading, login, register, clear],
-  );
+  const value = useMemo(() => {
+    const role = session?.memberships.find((m) => m.tenant === TENANT_SLUG)?.role;
+    return { session, loading, isStaff: role === "owner" || role === "staff", login, register, logout: clear };
+  }, [session, loading, login, register, clear]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

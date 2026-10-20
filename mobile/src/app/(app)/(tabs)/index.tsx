@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import type { Banner, Loyalty, Me, Menu } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useBranches } from "@/lib/branch";
 import { useBrand } from "@/lib/brand-provider";
 import { rewardProgress } from "@/lib/loyalty";
 import { useApi } from "@/lib/use-api";
-import { Link, useRouter } from "expo-router";
+import { Link, Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
@@ -20,7 +21,13 @@ function firstName(me: Me | null): string {
   return (me.full_name || me.email.split("@")[0]).split(" ")[0];
 }
 
+/** El personal no ve el inicio de clientes: va directo a los pedidos. */
 export default function Home() {
+  const { isStaff } = useAuth();
+  return isStaff ? <Redirect href="/kds" /> : <CustomerHome />;
+}
+
+function CustomerHome() {
   const router = useRouter();
   const brand = useBrand();
   const { selected, loading: loadingBranches, error: branchError, reload } = useBranches();

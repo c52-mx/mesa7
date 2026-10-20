@@ -23,7 +23,18 @@ export type Loyalty = {
   next_reward: (LoyaltyReward & { missing: number }) | null;
   recent: { points: number; kind: "earn" | "redeem" | "adjust"; note: string; created_at: string }[];
 };
-export type Branch = { id: number; name: string; address: string };
+export type Branch = { id: number; name: string; address: string; phone: string; hours: string };
+
+/** Pedido tal como lo ve el personal en el KDS. */
+export type KdsOrder = Order & {
+  customer: string;
+  elapsed_seconds: number;
+  prep_minutes: number;
+  semaphore: "green" | "yellow" | "red";
+};
+
+/** Tarjeta de un cliente vista desde caja. */
+export type CustomerCard = Omit<Loyalty, "name" | "recent"> & { customer: string; recent: Loyalty["recent"] };
 export type Option = { id: number; name: string; price_delta: string; is_popular: boolean };
 export type OptionGroup = {
   id: number;

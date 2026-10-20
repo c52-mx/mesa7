@@ -41,3 +41,32 @@ los lee de `GET /api/tenants/<slug>/`; el resto del tema se deriva de esos dos c
 El backend se despliega desde `backend/Dockerfile` (Daphne/ASGI, puerto 8000). Variables requeridas:
 `DJANGO_DEBUG=0`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`,
 `DATABASE_URL`, `REDIS_URL`. Postgres y Redis se crean como servicios en Dokploy.
+
+## Modo personal (caja y pedidos)
+
+Los usuarios con rol **dueño** o **staff** en el negocio (se asigna en el admin, en *Membresías*) ven en la app, en lugar de las pestañas de cliente:
+
+- **Pedidos:** tablero en vivo por sucursal con semáforo; preparar, listo, entregado, cancelar y cobrar.
+- **Caja:** escanea el QR de la tarjeta (o escribe el código de 12 dígitos), canjea recompensas y suma puntos por compras de mostrador.
+
+API: `GET /api/staff/loyalty/lookup/?code=`, `POST /api/staff/loyalty/redeem/` y `/earn/`, `POST /api/kds/orders/<id>/paid/`.
+
+## Datos de demostración
+
+- `python manage.py seed_demo` → negocio genérico `demo`. `python manage.py seed_cafecin` → Cafecín (precios y menú de ejemplo).
+- En el despliegue se activan con `SEED_DEMO=1` y `SEED_CAFECIN=1`. `DJANGO_STAFF_EMAIL`, `DJANGO_STAFF_PASSWORD` y `DJANGO_STAFF_TENANT` crean el usuario de caja.
+- `python manage.py reset_demo --tenant cafecin --yes` borra pedidos y puntos para repetir la demo.
+- Guion de la presentación: [docs/guion-demo.md](docs/guion-demo.md).
+
+## App instalable (APK de Android para pruebas)
+
+Requiere una cuenta gratuita de Expo. Desde `mobile/`:
+
+```bash
+npx eas-cli login
+npx eas-cli build --platform android --profile preview
+```
+
+El perfil `preview` (en `eas.json`) genera un APK con el nombre "Cafecín" apuntando al servidor de pruebas y al negocio `cafecin`. Al terminar, EAS entrega un enlace y un QR para instalarlo.
+
+**Importante:** el servidor de pruebas va por HTTP, así que el APK permite tráfico sin cifrar (`usesCleartextTraffic` en `app.json`). Cuando haya dominio con HTTPS hay que quitar esa opción y actualizar `EXPO_PUBLIC_API_URL`. Para iPhone hace falta una cuenta Apple Developer y TestFlight.

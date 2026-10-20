@@ -6,7 +6,7 @@ import { Text } from "@/components/ui/text";
 import { useBranches } from "@/lib/branch";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, View } from "react-native";
 
 export default function Order() {
   const { branches, selected, select, loading, error, reload } = useBranches();
@@ -37,10 +37,16 @@ export default function Order() {
               <CardContent className="gap-3">
                 {selected ? (
                   <>
-                    <Text className="text-sm text-muted-foreground">
-                      Sucursal: {selected.name}
-                      {selected.address ? ` · ${selected.address}` : ""}
-                    </Text>
+                    <View className="gap-1">
+                      <Text className="font-medium">{selected.name}</Text>
+                      {selected.address ? <Text className="text-sm text-muted-foreground">{selected.address}</Text> : null}
+                      {selected.hours ? <Text className="text-sm text-muted-foreground">{selected.hours}</Text> : null}
+                      {selected.phone ? (
+                        <Pressable onPress={() => Linking.openURL(`tel:${selected.phone.replace(/\s/g, "")}`)} accessibilityRole="link">
+                          <Text className="text-sm font-medium text-primary">Llamar · {selected.phone}</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
                     <Link href={`/branch/${selected.id}`} asChild>
                       <Button>
                         <Text>Ordena ahora</Text>

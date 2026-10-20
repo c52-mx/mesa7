@@ -1,0 +1,18 @@
+{
+  "cli": {
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_NAME": "Cafecín",
+        "EXPO_PUBLIC_API_URL": "http://31.220.60.177:8010",
+        "EXPO_PUBLIC_TENANT": "cafecin"
+      }
+    }
+  }
+}
