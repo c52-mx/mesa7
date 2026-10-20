@@ -1,16 +1,14 @@
 import { BannerCarousel } from "@/components/banner-carousel";
 import { BranchPicker } from "@/components/branch-picker";
 import { CartBar } from "@/components/cart-bar";
+import { ProductCard } from "@/components/product-card";
 import { ProgressBar } from "@/components/progress-bar";
-import { Stepper } from "@/components/stepper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import type { Banner, Loyalty, Me, Menu } from "@/lib/api";
 import { useBranches } from "@/lib/branch";
 import { useBrand } from "@/lib/brand-provider";
-import { useCart } from "@/lib/cart";
-import { money } from "@/lib/format";
 import { rewardProgress } from "@/lib/loyalty";
 import { useApi } from "@/lib/use-api";
 import { Link, useRouter } from "expo-router";
@@ -25,7 +23,6 @@ function firstName(me: Me | null): string {
 export default function Home() {
   const router = useRouter();
   const brand = useBrand();
-  const cart = useCart();
   const { selected, loading: loadingBranches, error: branchError, reload } = useBranches();
   const [category, setCategory] = useState<number | null>(null);
 
@@ -119,25 +116,11 @@ export default function Home() {
             ) : null}
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
-              {products.map((product) => (
-                <Card key={product.id} className="w-44">
-                  <CardContent className="justify-between gap-3 pt-5">
-                    <View className="gap-1">
-                      <Text className="font-semibold" numberOfLines={2}>
-                        {product.name}
-                      </Text>
-                      <Text className="font-medium text-muted-foreground">{money(product.price)}</Text>
-                    </View>
-                    <View className="items-start">
-                      <Stepper
-                        quantity={cart.quantityOf(product.id)}
-                        onAdd={() => selected && cart.add({ id: selected.id, name: selected.name }, product)}
-                        onRemove={() => cart.remove(product.id)}
-                      />
-                    </View>
-                  </CardContent>
-                </Card>
-              ))}
+              {selected
+                ? products.map((product) => (
+                    <ProductCard key={product.id} branch={selected} product={product} />
+                  ))
+                : null}
             </ScrollView>
           </View>
 

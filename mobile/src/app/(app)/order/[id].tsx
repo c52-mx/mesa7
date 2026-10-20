@@ -59,11 +59,17 @@ export default function OrderTracking() {
             <CardTitle>Tu pedido</CardTitle>
           </CardHeader>
           <CardContent className="gap-2">
-            {order.items.map((item) => (
-              <View key={item.product} className="flex-row justify-between">
-                <Text>
-                  {item.quantity} × {item.name}
-                </Text>
+            {order.items.map((item, index) => (
+              <View key={index} className="flex-row justify-between gap-3">
+                <View className="flex-1">
+                  <Text>
+                    {item.quantity} × {item.name}
+                  </Text>
+                  {item.options.length > 0 ? (
+                    <Text className="text-sm text-muted-foreground">{item.options.map((o) => o.name).join(" · ")}</Text>
+                  ) : null}
+                  {item.notes ? <Text className="text-sm italic text-muted-foreground">“{item.notes}”</Text> : null}
+                </View>
                 <Text>{money(Number(item.unit_price) * item.quantity)}</Text>
               </View>
             ))}

@@ -24,13 +24,27 @@ export type Loyalty = {
   recent: { points: number; kind: "earn" | "redeem" | "adjust"; note: string; created_at: string }[];
 };
 export type Branch = { id: number; name: string; address: string };
+export type Option = { id: number; name: string; price_delta: string; is_popular: boolean };
+export type OptionGroup = {
+  id: number;
+  name: string;
+  /** Mínimo a elegir: 0 = opcional. */
+  required: number;
+  max_select: number;
+  options: Option[];
+};
 export type Product = {
   id: number;
   name: string;
   description: string;
   price: string;
+  image_url: string;
+  is_featured: boolean;
   prep_time_minutes: number;
+  option_groups: OptionGroup[];
 };
+/** Opción elegida, tal como la guarda el pedido. */
+export type OrderOption = { group: string; name: string; price_delta: string };
 export type MenuCategory = { id: number; name: string; products: Product[] };
 export type Menu = { branch: { id: number; name: string }; categories: MenuCategory[] };
 
@@ -44,7 +58,14 @@ export type Order = {
   created_at: string;
   status_changed_at: string;
   estimated_ready_at: string;
-  items: { product: number; name: string; quantity: number; unit_price: string }[];
+  items: {
+    product: number;
+    name: string;
+    quantity: number;
+    unit_price: string;
+    options: OrderOption[];
+    notes: string;
+  }[];
 };
 
 export class ApiError extends Error {

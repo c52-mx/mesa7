@@ -1,88 +1,113 @@
 import { CartBar } from "@/components/cart-bar";
-import { Stepper } from "@/components/stepper";
+import { ProductCard } from "@/components/product-card";
+import { ProductRow } from "@/components/product-row";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { api, errorMessage, type Menu } from "@/lib/api";
-import { useCart } from "@/lib/cart";
-import { money } from "@/lib/format";
+import type { Menu } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 
 export default function BranchMenu() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const cart = useCart();
-  const [menu, setMenu] = useState<Menu | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data: menu, error, reload } = useApi<Menu>(`/api/branches/${id}/menu/`);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<number | null>(null);
 
-  async function load() {
-    setError(null);
-    setMenu(null);
-    try {
-      setMenu(await api<Menu>(`/api/branches/${id}/menu/`));
-    } catch (e) {
-      setError(errorMessage(e));
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, [id]);
-
-  if (error) {
-    return (
-      <View className="flex-1 items-center justify-center gap-4 bg-background p-6">
-        <Text className="text-center text-destructive">{error}</Text>
-        <Button onPress={load}>
-          <Text>Reintentar</Text>
-        </Button>
-      </View>
-    );
-  }
   if (!menu) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator />
+      <View className="flex-1 items-center justify-center gap-4 bg-background p-6">
+        {error ? (
+          <>
+            <Text className="text-center text-destructive">{error}</Text>
+            <Button onPress={reload}>
+              <Text>Reintentar</Text>
+            </Button>
+          </>
+        ) : (
+          <ActivityIndicator />
+        )}
       </View>
     );
   }
+
+  const branch = menu.branch;
+  const q = query.trim().toLowerCase();
+  const all = menu.categories.flatMap((c) => c.products);
+  const featured = all.filter((p) => p.is_featured);
+  const matches = q ? all.filter((p) => `${p.name} ${p.description}`.toLowerCase().includes(q)) : [];
+  const visible = menu.categories.filter((c) => category === null || c.id === category);
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="items-center p-4 pb-28">
-        <View className="w-full max-w-md gap-6">
-          <Text className="text-xl font-semibold">{menu.branch.name}</Text>
-          {menu.categories.length === 0 ? (
+      <ScrollView contentContainerClassName="items-center pb-28" keyboardShouldPersistTaps="handled">
+        <View className="w-full max-w-md gap-5 p-4">
+          <Input
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar en el menú"
+            accessibilityLabel="Buscar en el menú"
+            returnKeyType="search"
+          />
+
+          {menu.categories.length > 1 && !q ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {[{ id: null, name: "Todo" }, ...menu.categories].map((c) => {
+                const active = c.id === category;
+                return (
+                  <Pressable
+                    key={String(c.id)}
+                    onPress={() => setCategory(c.id)}
+                    accessibilityRole="button"
+                    className={active ? "rounded-full bg-primary px-4 py-2" : "rounded-full border border-border bg-card px-4 py-2"}
+                  >
+                    <Text className={active ? "font-medium text-primary-foreground" : "font-medium"}>{c.name}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : null}
+
+          {all.length === 0 ? (
             <Text className="text-muted-foreground">Por ahora no hay productos disponibles en esta sucursal.</Text>
           ) : null}
-          {menu.categories.map((category) => (
-            <View key={category.id} className="gap-3">
-              <Text className="text-lg font-semibold">{category.name}</Text>
-              {category.products.map((product) => (
-                <Card key={product.id}>
-                  <CardContent className="flex-row items-center justify-between gap-3 pt-6">
-                    <View className="flex-1 gap-1">
-                      <Text className="font-semibold">{product.name}</Text>
-                      {product.description ? (
-                        <Text className="text-sm text-muted-foreground">{product.description}</Text>
-                      ) : null}
-                      <Text className="font-medium">{money(product.price)}</Text>
-                    </View>
-                    <Stepper
-                      quantity={cart.quantityOf(product.id)}
-                      onAdd={() => cart.add(menu.branch, product)}
-                      onRemove={() => cart.remove(product.id)}
-                    />
-                  </CardContent>
-                </Card>
+
+          {q ? (
+            <View>
+              <Text className="mb-1 text-lg font-semibold">Resultados</Text>
+              {matches.length === 0 ? <Text className="py-4 text-muted-foreground">No encontramos «{query.trim()}».</Text> : null}
+              {matches.map((product) => (
+                <ProductRow key={product.id} branch={branch} product={product} />
               ))}
             </View>
-          ))}
+          ) : (
+            <>
+              {category === null && featured.length > 0 ? (
+                <View className="gap-3">
+                  <Text className="text-xl font-bold">Destacados</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                    {featured.map((product) => (
+                      <ProductCard key={product.id} branch={branch} product={product} />
+                    ))}
+                  </ScrollView>
+                </View>
+              ) : null}
+              {visible.map((c) => (
+                <View key={c.id}>
+                  <Text className="text-xl font-bold">{c.name}</Text>
+                  {c.products.map((product) => (
+                    <ProductRow key={product.id} branch={branch} product={product} />
+                  ))}
+                </View>
+              ))}
+            </>
+          )}
         </View>
       </ScrollView>
 
-      <CartBar branchId={menu.branch.id} />
+      <CartBar branchId={branch.id} />
     </View>
   );
 }

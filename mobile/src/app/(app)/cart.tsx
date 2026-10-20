@@ -1,4 +1,4 @@
-import { Stepper } from "@/components/stepper";
+import { ProductThumb } from "@/components/product-thumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,12 @@ export default function Cart() {
         body: {
           branch: cart.branch.id,
           notes: notes.trim(),
-          items: cart.lines.map((l) => ({ product: l.product.id, quantity: l.quantity })),
+          items: cart.lines.map((l) => ({
+            product: l.product.id,
+            quantity: l.quantity,
+            options: l.options.map((o) => o.id),
+            notes: l.notes,
+          })),
         },
       });
       cart.clear();
@@ -56,32 +61,41 @@ export default function Cart() {
         <Text className="text-xl font-semibold">{cart.branch.name}</Text>
 
         {cart.lines.map((line) => (
-          <Card key={line.product.id}>
-            <CardContent className="flex-row items-center justify-between gap-3 pt-6">
-              <View className="flex-1 gap-1">
-                <Text className="font-semibold">{line.product.name}</Text>
-                <Text className="text-sm text-muted-foreground">
-                  {money(line.product.price)} × {line.quantity} = {money(Number(line.product.price) * line.quantity)}
-                </Text>
+          <Card key={line.key}>
+            <CardContent className="gap-3 pt-6">
+              <View className="flex-row gap-3">
+                <ProductThumb product={line.product} size={56} />
+                <View className="flex-1 gap-1">
+                  <Text className="font-semibold">{line.product.name}</Text>
+                  {line.options.length > 0 ? (
+                    <Text className="text-sm text-muted-foreground">{line.options.map((o) => o.name).join(" · ")}</Text>
+                  ) : null}
+                  {line.notes ? <Text className="text-sm italic text-muted-foreground">“{line.notes}”</Text> : null}
+                </View>
+                <Text className="font-semibold">{money(line.unitPrice * line.quantity)}</Text>
               </View>
-              <Stepper
-                quantity={line.quantity}
-                onAdd={() => cart.add(cart.branch!, line.product)}
-                onRemove={() => cart.remove(line.product.id)}
-              />
+              <View className="flex-row items-center justify-end gap-3">
+                <Button size="icon" variant="outline" onPress={() => cart.changeQuantity(line.key, -1)} accessibilityLabel={line.quantity === 1 ? "Quitar del pedido" : "Quitar uno"}>
+                  <Text>{line.quantity === 1 ? "×" : "−"}</Text>
+                </Button>
+                <Text className="w-6 text-center font-semibold">{line.quantity}</Text>
+                <Button size="icon" variant="outline" onPress={() => cart.changeQuantity(line.key, 1)} accessibilityLabel="Agregar uno">
+                  <Text>+</Text>
+                </Button>
+              </View>
             </CardContent>
           </Card>
         ))}
 
         <View className="gap-2">
-          <Label nativeID="notes">Notas para la cocina (opcional)</Label>
+          <Label nativeID="notes">Comentarios generales del pedido (opcional)</Label>
           <Input
             aria-labelledby="notes"
             value={notes}
             onChangeText={setNotes}
             maxLength={500}
             multiline
-            placeholder="Sin azúcar, leche deslactosada..."
+            placeholder="Pasaré en 10 minutos..."
           />
         </View>
 

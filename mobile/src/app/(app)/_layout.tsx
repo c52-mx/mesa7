@@ -7,6 +7,7 @@ export default function AppLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="branch/[id]" options={{ title: "Menú" }} />
+        <Stack.Screen name="product/[id]" options={{ title: "Personaliza tu pedido" }} />
         <Stack.Screen name="cart" options={{ title: "Tu pedido" }} />
         <Stack.Screen name="order/[id]" options={{ title: "Seguimiento" }} />
       </Stack>
