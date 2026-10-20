@@ -20,7 +20,12 @@ export function Segmented<T extends string>({ options, value, onChange }: Props<
             onPress={() => onChange(option.value)}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            className={active ? "flex-1 items-center rounded-full bg-background py-2 shadow-sm" : "flex-1 items-center py-2"}
+            // Sin sombras ni sombras condicionales: NativeWind no admite añadir variables CSS (shadow-*) tras el primer render.
+            className={
+              active
+                ? "flex-1 items-center rounded-full border border-border bg-background py-2"
+                : "flex-1 items-center rounded-full border border-transparent py-2"
+            }
           >
             <Text className={active ? "font-semibold" : "text-muted-foreground"}>{option.label}</Text>
           </Pressable>

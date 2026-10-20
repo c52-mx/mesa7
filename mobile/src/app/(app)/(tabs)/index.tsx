@@ -121,7 +121,7 @@ export default function Home() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
               {products.map((product) => (
                 <Card key={product.id} className="w-44">
-                  <CardContent className="h-full justify-between gap-3 pt-5">
+                  <CardContent className="justify-between gap-3 pt-5">
                     <View className="gap-1">
                       <Text className="font-semibold" numberOfLines={2}>
                         {product.name}
