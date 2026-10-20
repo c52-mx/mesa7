@@ -1,7 +1,6 @@
 import { BannerCarousel } from "@/components/banner-carousel";
 import { BrandLogo } from "@/components/brand-logo";
 import { BranchPicker } from "@/components/branch-picker";
-import { CartBar } from "@/components/cart-bar";
 import { ProductCard } from "@/components/product-card";
 import { ProgressBar } from "@/components/progress-bar";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ export default function Home() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="items-center px-4 pb-28 pt-14">
+      <ScrollView contentContainerClassName="items-center px-4 pb-8 pt-14">
         <View className="w-full max-w-md gap-6">
           <View className="gap-4">
             <View className="flex-row items-center justify-between gap-3">
@@ -135,7 +134,6 @@ export default function Home() {
           ) : null}
         </View>
       </ScrollView>
-      <CartBar inset={false} />
     </View>
   );
 }

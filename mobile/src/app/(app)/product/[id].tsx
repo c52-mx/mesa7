@@ -1,4 +1,5 @@
 import { BottomBar } from "@/components/bottom-bar";
+import { KeyboardScrollView } from "@/components/keyboard-scroll-view";
 import { ProductThumb } from "@/components/product-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { useApi } from "@/lib/use-api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function ruleText(group: OptionGroup): string {
@@ -72,7 +73,11 @@ export default function ProductDetail() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="items-center" contentContainerStyle={{ paddingBottom: 170 + insets.bottom }}>
+      <KeyboardScrollView
+        contentContainerClassName="items-center"
+        bottomPadding={170 + insets.bottom}
+        scrollToEndOnKeyboard
+      >
         <View className="w-full max-w-md gap-6 p-4">
           <ProductThumb product={product} className="aspect-video w-full" />
           <View className="gap-1">
@@ -138,7 +143,7 @@ export default function ProductDetail() {
             </Text>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardScrollView>
 
       <BottomBar>
         {missing.length > 0 ? (

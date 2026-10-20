@@ -1,21 +1,26 @@
+import { KeyboardScrollView } from "@/components/keyboard-scroll-view";
 import { ProductThumb } from "@/components/product-thumb";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import { api, errorMessage, type Order } from "@/lib/api";
+import { useBranches } from "@/lib/branch";
+import { usePalette } from "@/lib/brand-provider";
 import { useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { useOrderAlerts } from "@/lib/order-alerts";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View } from "react-native";
 
 export default function Cart() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const palette = usePalette();
+  const { selected } = useBranches();
   const { track } = useOrderAlerts();
   const cart = useCart();
   const [notes, setNotes] = useState("");
@@ -25,10 +30,14 @@ export default function Cart() {
   if (!cart.branch || cart.lines.length === 0) {
     return (
       <View className="flex-1 items-center justify-center gap-4 bg-background p-6">
-        <Text className="text-muted-foreground">Tu pedido está vacío.</Text>
-        <Button onPress={() => router.back()}>
-          <Text>Volver al menú</Text>
-        </Button>
+        <Ionicons name="cart-outline" size={72} color={palette.mutedForeground} />
+        <Text className="text-xl font-semibold">Tu carrito está vacío</Text>
+        <Text className="text-center text-muted-foreground">Agrega productos del menú y aparecerán aquí.</Text>
+        {selected ? (
+          <Button onPress={() => router.push(`/branch/${selected.id}`)}>
+            <Text>Ordena ahora</Text>
+          </Button>
+        ) : null}
       </View>
     );
   }
@@ -43,6 +52,7 @@ export default function Cart() {
         body: {
           branch: cart.branch.id,
           notes: notes.trim(),
+          payment_method: "counter",
           items: cart.lines.map((l) => ({
             product: l.product.id,
             quantity: l.quantity,
@@ -52,8 +62,9 @@ export default function Cart() {
         },
       });
       cart.clear();
+      setNotes("");
       track(order.id); // desde ya se le avisa de cada cambio, aunque salga de la pantalla de seguimiento
-      router.replace(`/order/${order.id}`);
+      router.push(`/order/${order.id}`);
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);
@@ -61,13 +72,17 @@ export default function Cart() {
   }
 
   return (
-    <ScrollView
+    <KeyboardScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="items-center p-4"
-      contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
+      contentContainerClassName="items-center px-4 pt-14"
+      bottomPadding={32}
+      scrollToEndOnKeyboard
     >
       <View className="w-full max-w-md gap-4">
-        <Text className="text-xl font-semibold">{cart.branch.name}</Text>
+        <View className="gap-1">
+          <Text className="text-3xl font-bold">Tu pedido</Text>
+          <Text className="text-muted-foreground">Sucursal {cart.branch.name}</Text>
+        </View>
 
         {cart.lines.map((line) => (
           <Card key={line.key}>
@@ -108,17 +123,38 @@ export default function Cart() {
           />
         </View>
 
-        <View className="flex-row items-center justify-between">
+        <View className="gap-2">
+          <Text className="text-lg font-semibold">Forma de pago</Text>
+          <View className="flex-row items-center gap-3 rounded-xl border border-primary bg-card p-3">
+            <Ionicons name="radio-button-on" size={24} color={palette.primary} />
+            <View className="flex-1">
+              <Text className="font-medium">Pagar en el mostrador</Text>
+              <Text className="text-sm text-muted-foreground">Efectivo o tarjeta al recoger tu pedido</Text>
+            </View>
+            <Ionicons name="storefront-outline" size={22} color={palette.mutedForeground} />
+          </View>
+          <View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3 opacity-60">
+            <Ionicons name="radio-button-off" size={24} color={palette.mutedForeground} />
+            <View className="flex-1">
+              <Text className="font-medium">Tarjeta en la app</Text>
+              <Text className="text-sm text-muted-foreground">Paga desde tu celular y recoge sin pasar por caja</Text>
+            </View>
+            <Badge variant="outline">
+              <Text>Pronto</Text>
+            </Badge>
+          </View>
+        </View>
+
+        <View className="flex-row items-center justify-between pt-2">
           <Text className="text-lg font-semibold">Total</Text>
           <Text className="text-lg font-semibold">{money(cart.total)}</Text>
         </View>
-        <Text className="text-sm text-muted-foreground">Pagas en el mostrador al recoger tu pedido.</Text>
 
         {error ? <Text className="text-destructive">{error}</Text> : null}
         <Button size="lg" onPress={placeOrder} disabled={busy}>
-          <Text>{busy ? "Enviando..." : "Hacer pedido"}</Text>
+          <Text>{busy ? "Enviando..." : `Hacer pedido · ${money(cart.total)}`}</Text>
         </Button>
       </View>
-    </ScrollView>
+    </KeyboardScrollView>
   );
 }

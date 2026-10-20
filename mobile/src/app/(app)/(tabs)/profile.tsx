@@ -1,3 +1,4 @@
+import { KeyboardScrollView } from "@/components/keyboard-scroll-view";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
 import { useApi } from "@/lib/use-api";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
 export default function Profile() {
   const { logout } = useAuth();
@@ -60,7 +61,7 @@ export default function Profile() {
   const initial = (me.full_name || me.email).charAt(0).toUpperCase();
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="items-center px-4 pb-8 pt-14" keyboardShouldPersistTaps="handled">
+    <KeyboardScrollView className="flex-1 bg-background" contentContainerClassName="items-center px-4 pt-14" bottomPadding={32}>
       <View className="w-full max-w-md gap-5">
         <Text className="text-3xl font-bold">Perfil</Text>
 
@@ -106,6 +107,6 @@ export default function Profile() {
           <Text>Cerrar sesión</Text>
         </Button>
       </View>
-    </ScrollView>
+    </KeyboardScrollView>
   );
 }

@@ -1,4 +1,5 @@
 import { useBrand, usePalette } from "@/lib/brand-provider";
+import { useCart } from "@/lib/cart";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
@@ -15,6 +16,7 @@ const icon =
 export default function TabsLayout() {
   const brand = useBrand();
   const palette = usePalette();
+  const cart = useCart();
 
   return (
     <Tabs
@@ -27,6 +29,16 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: "Inicio", tabBarIcon: icon("home", "home-outline") }} />
       <Tabs.Screen name="order" options={{ title: "Ordena", tabBarIcon: icon("cafe", "cafe-outline") }} />
+      {/* El contador está siempre a la vista, igual que en Uber Eats. */}
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "Carrito",
+          tabBarIcon: icon("cart", "cart-outline"),
+          tabBarBadge: cart.count > 0 ? cart.count : undefined,
+          tabBarBadgeStyle: { backgroundColor: palette.primary, color: palette.primaryForeground },
+        }}
+      />
       {/* Si el negocio apaga la lealtad, la pestaña desaparece. */}
       <Tabs.Screen
         name="card"

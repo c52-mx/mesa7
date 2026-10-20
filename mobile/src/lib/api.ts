@@ -57,6 +57,8 @@ export type Order = {
   branch: number;
   total: string;
   notes: string;
+  payment_method: "counter" | "online";
+  payment_status: "pending" | "paid";
   created_at: string;
   status_changed_at: string;
   estimated_ready_at: string;

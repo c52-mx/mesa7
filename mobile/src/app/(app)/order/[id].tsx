@@ -84,6 +84,13 @@ export default function OrderTracking() {
               <Text className="font-semibold">{money(order.total)}</Text>
             </View>
             {order.notes ? <Text className="text-sm text-muted-foreground">Notas: {order.notes}</Text> : null}
+            <View className="mt-1 flex-row justify-between">
+              <Text className="text-sm text-muted-foreground">Pago</Text>
+              <Text className="text-sm text-muted-foreground">
+                {order.payment_method === "counter" ? "En el mostrador" : "En la app"} ·{" "}
+                {order.payment_status === "paid" ? "Pagado" : "Pendiente"}
+              </Text>
+            </View>
           </CardContent>
         </Card>
       </View>
