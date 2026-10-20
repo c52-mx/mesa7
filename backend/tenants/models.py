@@ -15,6 +15,9 @@ class Tenant(models.Model):
     primary_color = models.CharField(max_length=7, default="#171717", validators=[hex_color])
     secondary_color = models.CharField(max_length=7, default="#F5F5F5", validators=[hex_color])
     logo_url = models.URLField(blank=True)
+    loyalty_enabled = models.BooleanField(
+        default=True, help_text="Si se apaga, la app oculta la tarjeta y los puntos."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

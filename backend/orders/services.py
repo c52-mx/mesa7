@@ -6,6 +6,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from loyalty.services import award_for_order
 from menu.models import BranchProduct, Product
 
 from .models import Order, OrderItem
@@ -92,5 +93,7 @@ def change_status(order, new_status):
     order.status = new_status
     order.status_changed_at = timezone.now()
     order.save(update_fields=["status", "status_changed_at"])
+    if new_status == Order.Status.DELIVERED:
+        award_for_order(order)
     transaction.on_commit(lambda: publish_order(order.pk, push=True), robust=True)
     return order

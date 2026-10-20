@@ -2,7 +2,9 @@ from django.contrib import admin
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from accounts.views import LoginView, RegisterView, devices
+from accounts.views import LoginView, RegisterView, devices, me
+from loyalty.views import loyalty
+from promos.views import banners
 from menu.views import branch_menu, branches
 
 from tenants.api import tenant_branding
@@ -18,6 +20,9 @@ urlpatterns = [
     path("api/auth/token/refresh/", TokenRefreshView.as_view()),
     path("api/tenants/<slug:slug>/", tenant_branding),
     path("api/devices/", devices),
+    path("api/me/", me),
+    path("api/loyalty/", loyalty),
+    path("api/banners/", banners),
     path("api/branches/", branches),
     path("api/branches/<int:branch_id>/menu/", branch_menu),
     path("api/orders/", orders),

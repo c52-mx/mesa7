@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand
 
+from loyalty.models import LoyaltyProgram, LoyaltyReward
 from menu.models import BranchProduct, Category, Product
+from promos.models import Banner
 from tenants.models import Branch, Tenant
 
 # (categoría, [(producto, precio MXN, minutos de preparación, descripción)])
@@ -27,6 +29,18 @@ MENU = [
         ("Cheesecake", "75", 2, "Rebanada con frutos rojos"),
         ("Brownie", "50", 2, "Chocolate oscuro con nuez"),
     ]),
+]
+# Hitos de la barra de progreso: (puntos, premio). 1 punto por cada $10 gastados.
+RECOMPENSAS = [
+    (25, "Americano de cortesía"),
+    (50, "Postre de cortesía"),
+    (75, "Sándwich de cortesía"),
+    (100, "Bebida y postre de cortesía"),
+]
+BANNERS = [
+    ("Bienvenido a Café Demo", "Pide desde tu celular y recoge sin filas."),
+    ("Suma puntos con cada pedido", "1 punto por cada $10. Canjéalos por bebidas y postres."),
+    ("Cold brew de temporada", "Pruébalo hoy en cualquier sucursal."),
 ]
 SUCURSALES = [("Centro", "Av. Juárez 100"), ("Norte", "Blvd. Norte 250")]
 NO_DISPONIBLE_EN_NORTE = ["Frappé de caramelo", "Cheesecake"]
@@ -73,5 +87,14 @@ class Command(BaseCommand):
                 branch=branches["Norte"],
                 product=products[name],
                 defaults={"is_available": False},
+            )
+        LoyaltyProgram.objects.get_or_create(tenant=tenant, defaults={"spend_per_point": 10})
+        for points, name in RECOMPENSAS:
+            LoyaltyReward.objects.update_or_create(
+                tenant=tenant, points_required=points, defaults={"name": name}
+            )
+        for position, (title, text) in enumerate(BANNERS):
+            Banner.objects.update_or_create(
+                tenant=tenant, title=title, defaults={"text": text, "position": position}
             )
         self.stdout.write(self.style.SUCCESS(f"Demo listo: tenant '{tenant.slug}'."))

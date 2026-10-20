@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "tenants",
     "menu",
     "orders",
+    "loyalty",
+    "promos",
 ]
 
 MIDDLEWARE = [

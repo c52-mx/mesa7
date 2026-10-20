@@ -38,6 +38,24 @@ def devices(request):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ProfileSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=30, required=False, allow_blank=True)
+
+
+@api_view(["GET", "PATCH"])
+def me(request):
+    """Datos del usuario; el correo no se edita desde aquí."""
+    user = request.user
+    if request.method == "PATCH":
+        serializer = ProfileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        for field, value in serializer.validated_data.items():
+            setattr(user, field, value.strip())
+        user.save(update_fields=list(serializer.validated_data))
+    return Response({"email": user.email, "full_name": user.full_name, "phone": user.phone})
+
+
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
     throttle_classes = [ScopedRateThrottle]

@@ -43,7 +43,7 @@ class TenantAdminMixin:
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "primary_color", "secondary_color", "is_active")
+    list_display = ("name", "slug", "primary_color", "secondary_color", "loyalty_enabled", "is_active")
     prepopulated_fields = {"slug": ("name",)}
 
 

@@ -23,6 +23,7 @@ def tenant_branding(request, slug):
             "primary_color": tenant.primary_color,
             "secondary_color": tenant.secondary_color,
             "logo_url": tenant.logo_url,
+            "loyalty_enabled": tenant.loyalty_enabled,
         }
     )
 
