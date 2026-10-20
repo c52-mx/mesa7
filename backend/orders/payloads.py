@@ -22,6 +22,8 @@ def order_payload(order, kds=False):
         "branch": order.branch_id,
         "total": str(order.total),
         "notes": order.notes,
+        "payment_method": order.payment_method,
+        "payment_status": order.payment_status,
         "created_at": order.created_at,
         "status_changed_at": order.status_changed_at,
         "estimated_ready_at": order.estimated_ready_at,

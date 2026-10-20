@@ -37,15 +37,20 @@ class OrderAdmin(TenantAdminMixin, admin.ModelAdmin):
     Un cambio de estado desde aquí avisa al cliente igual que el KDS (tiempo real, push y puntos).
     """
 
-    list_display = ("id", "branch", "customer", "status", "total", "created_at")
-    list_filter = ("branch", "status")
+    list_display = ("id", "branch", "customer", "status", "payment_status", "total", "created_at")
+    list_filter = ("branch", "status", "payment_status")
     fields = (
-        "branch", "customer", "status", "total", "notes",
+        "branch", "customer", "status", "payment_method", "payment_status", "total", "notes",
         "prep_minutes", "estimated_ready_at", "created_at",
     )
-    readonly_fields = tuple(f for f in fields if f != "status")
+    readonly_fields = tuple(f for f in fields if f not in ("status", "payment_status"))
     inlines = [OrderItemInline]
-    actions = [status_action(s) for s in ("preparing", "ready", "delivered", "cancelled")]
+    actions = [status_action(s) for s in ("preparing", "ready", "delivered", "cancelled")] + ["mark_paid"]
+
+    @admin.action(description="Marcar como pagado")
+    def mark_paid(self, request, queryset):
+        updated = queryset.update(payment_status=Order.PaymentStatus.PAID)
+        self.message_user(request, f"{updated} pedido(s) marcados como pagados.", messages.SUCCESS)
 
     def has_add_permission(self, request):
         return False

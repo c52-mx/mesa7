@@ -23,6 +23,7 @@ class OrderCreateSerializer(serializers.Serializer):
     branch = serializers.IntegerField()
     items = ItemSerializer(many=True, allow_empty=False, max_length=50)
     notes = serializers.CharField(required=False, allow_blank=True, max_length=500)
+    payment_method = serializers.ChoiceField(choices=Order.PaymentMethod.choices, required=False, default=Order.PaymentMethod.COUNTER)
 
 
 def _orders(tenant):
@@ -50,6 +51,7 @@ def orders(request):
             customer=request.user,
             items=data["items"],
             notes=data.get("notes", ""),
+            payment_method=data["payment_method"],
         )
         return Response(order_payload(_orders(tenant).get(pk=order.pk)), status=201)
     mine = _orders(tenant).filter(customer=request.user)[:50]

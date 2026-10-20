@@ -69,11 +69,14 @@ def choose_options(product, groups, option_ids):
 
 
 @transaction.atomic
-def create_order(*, tenant, branch, customer, items, notes=""):
+def create_order(*, tenant, branch, customer, items, notes="", payment_method=Order.PaymentMethod.COUNTER):
     """items: lista de líneas {"product": id, "quantity": n, "options": [id, ...], "notes": "..."}.
 
     Cada línea es independiente: el mismo producto con otras opciones o notas es otra línea.
     """
+    if payment_method != Order.PaymentMethod.COUNTER:
+        # El cobro en la app llegará con la integración del proveedor de pagos.
+        raise ValidationError({"payment_method": "El pago en la app aún no está disponible."})
     product_ids = {item["product"] for item in items}
     products = {
         p.pk: p
@@ -103,6 +106,7 @@ def create_order(*, tenant, branch, customer, items, notes=""):
         branch=branch,
         customer=customer,
         notes=notes,
+        payment_method=payment_method,
         total=sum(unit * qty for _, qty, _, _, unit in lines),
         prep_minutes=prep,
         estimated_ready_at=timezone.now() + timedelta(minutes=eta),

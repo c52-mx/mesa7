@@ -2,6 +2,7 @@ from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from rest_framework.test import APIClient
 
 from loyalty.models import LoyaltyProgram, LoyaltyTransaction
 
@@ -31,6 +32,7 @@ class AdminStatusTests(TestCase):
             f"/admin/orders/order/{self.order.pk}/change/",
             {
                 "status": status,
+                "payment_status": "pending",
                 "items-TOTAL_FORMS": "1", "items-INITIAL_FORMS": "1",
                 "items-MIN_NUM_FORMS": "0", "items-MAX_NUM_FORMS": "1000",
                 "items-0-id": str(item.pk), "items-0-order": str(self.order.pk),
@@ -64,3 +66,49 @@ class AdminStatusTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Order.objects.get().status, "ready")
         publish.assert_called_once_with(self.order.pk, push=True)
+    def test_mark_paid_action(self):
+        response = self.client.post(
+            "/admin/orders/order/", {"action": "mark_paid", "_selected_action": [str(self.order.pk)]}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Order.objects.get().payment_status, "paid")
+
+    def test_payment_status_can_be_corrected_from_the_form(self):
+        item = self.order.items.get()
+        self.client.post(
+            f"/admin/orders/order/{self.order.pk}/change/",
+            {
+                "status": "received", "payment_status": "paid",
+                "items-TOTAL_FORMS": "1", "items-INITIAL_FORMS": "1",
+                "items-MIN_NUM_FORMS": "0", "items-MAX_NUM_FORMS": "1000",
+                "items-0-id": str(item.pk), "items-0-order": str(self.order.pk),
+            },
+        )
+        self.assertEqual(Order.objects.get().payment_status, "paid")
+
+
+class PaymentMethodTests(TestCase):
+    def setUp(self):
+        make_world(self)
+        self.client = APIClient()
+        self.client.force_authenticate(self.ana)
+
+    def place(self, **extra):
+        body = {"branch": self.branch.id, "items": [{"product": self.latte.id, "quantity": 1}], **extra}
+        return self.client.post("/api/orders/", body, format="json")
+
+    def test_defaults_to_counter_and_pending(self):
+        body = self.place().json()
+        self.assertEqual((body["payment_method"], body["payment_status"]), ("counter", "pending"))
+
+    def test_counter_is_accepted_explicitly(self):
+        self.assertEqual(self.place(payment_method="counter").status_code, 201)
+
+    def test_online_payment_is_not_available_yet(self):
+        response = self.place(payment_method="online")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("payment_method", response.json())
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_unknown_method_is_rejected(self):
+        self.assertEqual(self.place(payment_method="bitcoin").status_code, 400)

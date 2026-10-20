@@ -15,6 +15,14 @@ class Order(TenantModel):
         DELIVERED = "delivered", "Entregado"
         CANCELLED = "cancelled", "Cancelado"
 
+    class PaymentMethod(models.TextChoices):
+        COUNTER = "counter", "En el mostrador"
+        ONLINE = "online", "En la app"
+
+    class PaymentStatus(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        PAID = "paid", "Pagado"
+
     ACTIVE = (Status.RECEIVED, Status.PREPARING, Status.READY)
     # Pedidos que todavía ocupan a la cocina (para calcular el ETA).
     IN_KITCHEN = (Status.RECEIVED, Status.PREPARING)
@@ -27,6 +35,10 @@ class Order(TenantModel):
         max_length=10, choices=Status.choices, default=Status.RECEIVED, db_index=True
     )
     notes = models.TextField(blank=True)
+    payment_method = models.CharField(max_length=10, choices=PaymentMethod.choices, default=PaymentMethod.COUNTER)
+    payment_status = models.CharField(
+        max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.PENDING, db_index=True
+    )
     total = models.DecimalField(max_digits=10, decimal_places=2)
     prep_minutes = models.PositiveIntegerField(help_text="Preparación estimada de este pedido")
     estimated_ready_at = models.DateTimeField()
