@@ -55,3 +55,15 @@ class BrandingTests(TestCase):
         tenant = Tenant(name="X", slug="x", primary_color="naranja")
         with self.assertRaises(ValidationError):
             tenant.full_clean()
+
+class LogoTests(TestCase):
+    def test_server_path_logo_becomes_absolute_url(self):
+        Tenant.objects.create(name="Uno", slug="uno", logo_url="/static/brands/cafecin.jpg")
+        data = self.client.get("/api/tenants/uno/").json()
+        self.assertTrue(data["logo_url"].startswith("http://testserver/static/brands/"))
+
+    def test_full_url_and_empty_logo_are_returned_as_is(self):
+        Tenant.objects.create(name="Dos", slug="dos", logo_url="https://cdn.example.com/logo.png")
+        Tenant.objects.create(name="Tres", slug="tres")
+        self.assertEqual(self.client.get("/api/tenants/dos/").json()["logo_url"], "https://cdn.example.com/logo.png")
+        self.assertEqual(self.client.get("/api/tenants/tres/").json()["logo_url"], "")

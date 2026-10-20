@@ -6,8 +6,21 @@ from tenants.models import TenantModel
 
 
 class Category(TenantModel):
+    class Icon(models.TextChoices):
+        CAFE = "cafe", "Café / bebida caliente"
+        COLD = "cold", "Bebida fría"
+        FOOD = "food", "Comida"
+        DESSERT = "dessert", "Postre"
+        BURGER = "burger", "Hamburguesa / rápida"
+        DRINK = "drink", "Bebida con alcohol"
+        FRUIT = "fruit", "Fruta / saludable"
+
     name = models.CharField(max_length=120)
     position = models.PositiveIntegerField(default=0)
+    icon = models.CharField(
+        max_length=10, choices=Icon.choices, default=Icon.CAFE,
+        help_text="Ilustración de los productos de esta categoría que no tienen foto",
+    )
 
     class Meta:
         ordering = ["position", "name"]

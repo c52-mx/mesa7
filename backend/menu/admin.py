@@ -19,7 +19,7 @@ class ProductOptionGroupInline(TenantInlineMixin, admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(TenantAdminMixin, admin.ModelAdmin):
-    list_display = ("name", "position", "tenant")
+    list_display = ("name", "icon", "position", "tenant")
 
 
 @admin.register(Product)

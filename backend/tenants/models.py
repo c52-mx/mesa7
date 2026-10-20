@@ -14,7 +14,9 @@ class Tenant(models.Model):
     # Marca blanca: la app toma estos valores del tenant; el resto del tema se deriva en la app.
     primary_color = models.CharField(max_length=7, default="#171717", validators=[hex_color])
     secondary_color = models.CharField(max_length=7, default="#F5F5F5", validators=[hex_color])
-    logo_url = models.URLField(blank=True)
+    logo_url = models.CharField(
+        max_length=300, blank=True, help_text="URL completa o una ruta del servidor como /static/brands/logo.jpg"
+    )
     loyalty_enabled = models.BooleanField(
         default=True, help_text="Si se apaga, la app oculta la tarjeta y los puntos."
     )

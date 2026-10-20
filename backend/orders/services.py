@@ -127,8 +127,15 @@ def create_order(*, tenant, branch, customer, items, notes=""):
     return order
 
 
-def change_status(order, new_status):
-    if new_status not in TRANSITIONS.get(order.status, set()):
+def change_status(order, new_status, *, force=False):
+    """Cambia el estado y avisa (tiempo real, push, puntos).
+
+    El KDS solo sigue el flujo normal; `force=True` (soporte desde el admin) permite corregir
+    cualquier estado.
+    """
+    if force and new_status == order.status:
+        return order
+    if not force and new_status not in TRANSITIONS.get(order.status, set()):
         raise ValidationError({"status": f"No se puede pasar de '{order.status}' a '{new_status}'."})
     order.status = new_status
     order.status_changed_at = timezone.now()

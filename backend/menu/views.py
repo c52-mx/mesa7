@@ -55,6 +55,7 @@ def branch_menu(request, branch_id):
                 "description": p.description,
                 "price": str(p.price),
                 "image_url": p.image_url,
+                "icon": p.category.icon,
                 "is_featured": p.is_featured,
                 "prep_time_minutes": p.prep_time_minutes,
                 "option_groups": [group_payload(g) for g in groups[p.pk]],

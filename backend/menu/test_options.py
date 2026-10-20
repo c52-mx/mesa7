@@ -146,3 +146,21 @@ class OptionAdminTests(TestCase):
         group = OptionGroup.objects.get(name="Tipo de leche")
         self.assertEqual(group.tenant, tenant)
         self.assertEqual(sorted(Option.objects.values_list("name", "tenant_id")), [("Avena", tenant.id), ("Entera", tenant.id)])
+
+class CategoryIconTests(TestCase):
+    def test_menu_exposes_category_icon_per_product(self):
+        tenant = Tenant.objects.create(name="Uno", slug="uno")
+        branch = Branch.objects.create(tenant=tenant, name="Centro")
+        cold = Category.objects.create(tenant=tenant, name="Frías", icon="cold")
+        Product.objects.create(tenant=tenant, category=cold, name="Cold brew", price="58")
+        Category.objects.create(tenant=tenant, name="Sin productos")
+        user = User.objects.create_user("ana@x.com", password="x")
+        Membership.objects.create(user=user, tenant=tenant)
+        client = APIClient()
+        client.force_authenticate(user)
+        menu = client.get(f"/api/branches/{branch.id}/menu/").json()
+        self.assertEqual(menu["categories"][0]["products"][0]["icon"], "cold")
+
+    def test_default_icon_is_cafe(self):
+        tenant = Tenant.objects.create(name="Uno", slug="uno")
+        self.assertEqual(Category.objects.create(tenant=tenant, name="X").icon, "cafe")

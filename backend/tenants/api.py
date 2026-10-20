@@ -16,13 +16,16 @@ def tenant_branding(request, slug):
         tenant = Tenant.objects.get(slug=slug, is_active=True)
     except Tenant.DoesNotExist:
         raise Http404
+    logo = tenant.logo_url
+    if logo.startswith("/"):  # ruta del propio servidor: la app necesita la URL completa
+        logo = request.build_absolute_uri(logo)
     return Response(
         {
             "slug": tenant.slug,
             "name": tenant.name,
             "primary_color": tenant.primary_color,
             "secondary_color": tenant.secondary_color,
-            "logo_url": tenant.logo_url,
+            "logo_url": logo,
             "loyalty_enabled": tenant.loyalty_enabled,
         }
     )

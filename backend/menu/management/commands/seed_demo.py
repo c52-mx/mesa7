@@ -55,10 +55,18 @@ GRUPOS = {
         [("Shot extra", "14", True), ("Crema batida", "10", False), ("Jarabe de vainilla", "14", False),
          ("Jarabe de caramelo", "14", False)],
     ),
+    "¿Lo calentamos?": (1, 1, [("Sí, caliente", "0", True), ("No, así está bien", "0", False)]),
+    "Acompañamiento": (0, 1, [("Bola de helado", "22", True), ("Salsa de caramelo", "8", False)]),
 }
 # Qué grupos lleva cada producto. Las bebidas llevan Tamaño y Extras; las de leche, además Tipo de leche.
 CON_LECHE = {"Latte", "Capuchino", "Moka", "Chai latte", "Frappé de caramelo"}
-CATEGORIAS_BEBIDA = {"Bebidas calientes", "Bebidas frías"}
+GRUPOS_POR_CATEGORIA = {
+    "Bebidas calientes": ["Tamaño", "Extras"],
+    "Bebidas frías": ["Tamaño", "Extras"],
+    "Alimentos": ["¿Lo calentamos?"],
+    "Postres": ["Acompañamiento"],
+}
+ICONOS = {"Bebidas calientes": "cafe", "Bebidas frías": "cold", "Alimentos": "food", "Postres": "dessert"}
 SUCURSALES = [("Centro", "Av. Juárez 100"), ("Norte", "Blvd. Norte 250")]
 NO_DISPONIBLE_EN_NORTE = ["Frappé de caramelo", "Cheesecake"]
 
@@ -74,6 +82,7 @@ class Command(BaseCommand):
                 # Paleta de Cafecín (naranja del logo y vino de la bufanda)
                 "primary_color": "#F07830",
                 "secondary_color": "#781818",
+                "logo_url": "/static/brands/cafecin.jpg",
             },
         )
         branches = {
@@ -85,7 +94,7 @@ class Command(BaseCommand):
         products = {}
         for position, (cat_name, items) in enumerate(MENU):
             category, _ = Category.objects.update_or_create(
-                tenant=tenant, name=cat_name, defaults={"position": position}
+                tenant=tenant, name=cat_name, defaults={"position": position, "icon": ICONOS[cat_name]}
             )
             for name, price, prep, description in items:
                 products[name], _ = Product.objects.update_or_create(
@@ -112,9 +121,9 @@ class Command(BaseCommand):
                     defaults={"price_delta": extra, "is_popular": popular, "position": position},
                 )
         for name, product in products.items():
-            if product.category.name not in CATEGORIAS_BEBIDA:
-                continue
-            wanted = ["Tamaño", "Tipo de leche", "Extras"] if name in CON_LECHE else ["Tamaño", "Extras"]
+            wanted = list(GRUPOS_POR_CATEGORIA.get(product.category.name, []))
+            if name in CON_LECHE:
+                wanted.insert(1, "Tipo de leche")
             for position, group_name in enumerate(wanted):
                 ProductOptionGroup.objects.update_or_create(
                     tenant=tenant, product=product, group=groups[group_name], defaults={"position": position}
