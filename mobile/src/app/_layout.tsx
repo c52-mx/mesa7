@@ -2,6 +2,7 @@ import "../../global.css";
 
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { BrandProvider } from "@/lib/brand-provider";
+import { CartProvider } from "@/lib/cart";
 import { Stack } from "expo-router";
 
 function RootNavigator() {
@@ -24,7 +25,9 @@ export default function RootLayout() {
   return (
     <BrandProvider>
       <AuthProvider>
-        <RootNavigator />
+        <CartProvider>
+          <RootNavigator />
+        </CartProvider>
       </AuthProvider>
     </BrandProvider>
   );

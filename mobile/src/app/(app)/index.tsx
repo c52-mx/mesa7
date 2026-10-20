@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { api, errorMessage, type Branch } from "@/lib/api";
+import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 
@@ -56,9 +57,11 @@ export default function Branches() {
                 {branch.address ? <CardDescription>{branch.address}</CardDescription> : null}
               </CardHeader>
               <CardContent>
-                <Button disabled>
-                  <Text>Ver menú (próximamente)</Text>
-                </Button>
+                <Link href={`/branch/${branch.id}`} asChild>
+                  <Button>
+                    <Text>Ver menú</Text>
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ))

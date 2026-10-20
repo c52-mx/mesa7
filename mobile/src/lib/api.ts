@@ -10,6 +10,28 @@ export type Branding = {
   logo_url: string;
 };
 export type Branch = { id: number; name: string; address: string };
+export type Product = {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  prep_time_minutes: number;
+};
+export type MenuCategory = { id: number; name: string; products: Product[] };
+export type Menu = { branch: { id: number; name: string }; categories: MenuCategory[] };
+
+export type OrderStatus = "received" | "preparing" | "ready" | "delivered" | "cancelled";
+export type Order = {
+  id: number;
+  status: OrderStatus;
+  branch: number;
+  total: string;
+  notes: string;
+  created_at: string;
+  status_changed_at: string;
+  estimated_ready_at: string;
+  items: { product: number; name: string; quantity: number; unit_price: string }[];
+};
 
 export class ApiError extends Error {
   constructor(
@@ -28,6 +50,9 @@ export function setSession(next: Tokens | null, listener?: (t: Tokens | null) =>
   tokens = next;
   if (listener) onTokens = listener;
 }
+
+/** Access token vigente (para el handshake del WebSocket). */
+export const getAccessToken = () => tokens?.access ?? null;
 
 type Options = { method?: string; body?: unknown; auth?: boolean };
 
