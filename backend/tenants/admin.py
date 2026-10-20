@@ -40,6 +40,23 @@ class TenantAdminMixin:
                 kwargs["queryset"] = related.objects.for_tenant_ids(ids)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def save_formset(self, request, form, formset, change):
+        """Las filas nuevas de los inlines heredan el tenant del registro padre."""
+        instances = formset.save(commit=False)
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for obj in instances:
+            if obj.tenant_id is None:
+                obj.tenant_id = form.instance.tenant_id
+            obj.save()
+        formset.save_m2m()
+
+
+class TenantInlineMixin(TenantAdminMixin):
+    """Para inlines de modelos con tenant: oculta el campo y limita los selectores al tenant."""
+
+    exclude = ("tenant",)
+
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):

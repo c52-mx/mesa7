@@ -47,8 +47,13 @@ class OrderItem(TenantModel):
     product = models.ForeignKey("menu.Product", on_delete=models.PROTECT, related_name="+")
     # Copia al momento de la compra: el menú puede cambiar después.
     name = models.CharField(max_length=120)
-    unit_price = models.DecimalField(max_digits=8, decimal_places=2)
+    unit_price = models.DecimalField(
+        max_digits=8, decimal_places=2, help_text="Precio de una pieza, ya con los extras elegidos"
+    )
     quantity = models.PositiveSmallIntegerField()
+    # Opciones elegidas al momento de la compra: [{"group": "Tamaño", "name": "Grande", "price_delta": "12.00"}]
+    options = models.JSONField(default=list, blank=True)
+    notes = models.CharField(max_length=200, blank=True)
 
     def __str__(self):
         return f"{self.quantity} x {self.name}"

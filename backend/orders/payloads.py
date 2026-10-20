@@ -26,7 +26,14 @@ def order_payload(order, kds=False):
         "status_changed_at": order.status_changed_at,
         "estimated_ready_at": order.estimated_ready_at,
         "items": [
-            {"product": i.product_id, "name": i.name, "quantity": i.quantity, "unit_price": str(i.unit_price)}
+            {
+                "product": i.product_id,
+                "name": i.name,
+                "quantity": i.quantity,
+                "unit_price": str(i.unit_price),
+                "options": i.options,
+                "notes": i.notes,
+            }
             for i in order.items.all()
         ],
     }

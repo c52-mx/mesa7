@@ -15,6 +15,8 @@ from .services import change_status, create_order
 class ItemSerializer(serializers.Serializer):
     product = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1, max_value=20)
+    options = serializers.ListField(child=serializers.IntegerField(), required=False, default=list, max_length=30)
+    notes = serializers.CharField(required=False, allow_blank=True, default="", max_length=200)
 
 
 class OrderCreateSerializer(serializers.Serializer):

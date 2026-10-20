@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from loyalty.models import LoyaltyProgram, LoyaltyReward
-from menu.models import BranchProduct, Category, Product
+from menu.models import BranchProduct, Category, Option, OptionGroup, Product, ProductOptionGroup
 from promos.models import Banner
 from tenants.models import Branch, Tenant
 
@@ -42,6 +42,23 @@ BANNERS = [
     ("Suma puntos con cada pedido", "1 punto por cada $10. Canjéalos por bebidas y postres."),
     ("Cold brew de temporada", "Pruébalo hoy en cualquier sucursal."),
 ]
+DESTACADOS = {"Latte", "Frappé de caramelo", "Cheesecake", "Croissant"}
+# Grupos de opciones: (nombre, mínimo, máximo, [(opción, cargo extra, popular)])
+GRUPOS = {
+    "Tamaño": (1, 1, [("Chico", "0", False), ("Grande", "12", True)]),
+    "Tipo de leche": (
+        1, 1,
+        [("Entera", "0", False), ("Deslactosada", "14", True), ("Almendra", "17", False), ("Avena", "17", False)],
+    ),
+    "Extras": (
+        0, 3,
+        [("Shot extra", "14", True), ("Crema batida", "10", False), ("Jarabe de vainilla", "14", False),
+         ("Jarabe de caramelo", "14", False)],
+    ),
+}
+# Qué grupos lleva cada producto. Las bebidas llevan Tamaño y Extras; las de leche, además Tipo de leche.
+CON_LECHE = {"Latte", "Capuchino", "Moka", "Chai latte", "Frappé de caramelo"}
+CATEGORIAS_BEBIDA = {"Bebidas calientes", "Bebidas frías"}
 SUCURSALES = [("Centro", "Av. Juárez 100"), ("Norte", "Blvd. Norte 250")]
 NO_DISPONIBLE_EN_NORTE = ["Frappé de caramelo", "Cheesecake"]
 
@@ -79,7 +96,28 @@ class Command(BaseCommand):
                         "price": price,
                         "prep_time_minutes": prep,
                         "description": description,
+                        "is_featured": name in DESTACADOS,
                     },
+                )
+        groups = {}
+        for group_name, (minimum, maximum, options) in GRUPOS.items():
+            groups[group_name], _ = OptionGroup.objects.update_or_create(
+                tenant=tenant, name=group_name, defaults={"min_select": minimum, "max_select": maximum}
+            )
+            for position, (option_name, extra, popular) in enumerate(options):
+                Option.objects.update_or_create(
+                    tenant=tenant,
+                    group=groups[group_name],
+                    name=option_name,
+                    defaults={"price_delta": extra, "is_popular": popular, "position": position},
+                )
+        for name, product in products.items():
+            if product.category.name not in CATEGORIAS_BEBIDA:
+                continue
+            wanted = ["Tamaño", "Tipo de leche", "Extras"] if name in CON_LECHE else ["Tamaño", "Extras"]
+            for position, group_name in enumerate(wanted):
+                ProductOptionGroup.objects.update_or_create(
+                    tenant=tenant, product=product, group=groups[group_name], defaults={"position": position}
                 )
         for name in NO_DISPONIBLE_EN_NORTE:
             BranchProduct.objects.update_or_create(

@@ -1,5 +1,6 @@
 import math
 from datetime import timedelta
+from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Sum
@@ -8,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 
 from loyalty.services import award_for_order
 from menu.models import BranchProduct, Product
+from menu.services import option_groups_for
 
 from .models import Order, OrderItem
 from .realtime import publish_order
@@ -42,44 +44,82 @@ def kitchen_backlog_minutes(tenant, branch):
     return math.ceil(pending / KITCHEN_CONCURRENCY)
 
 
+def choose_options(product, groups, option_ids):
+    """Valida las opciones elegidas contra los grupos del producto y devuelve su detalle.
+
+    Cada grupo debe respetar su mínimo (obligatorio) y su máximo. Una opción que no pertenece a un
+    grupo vigente del producto se rechaza.
+    """
+    by_id = {o["id"]: (g, o) for g in groups for o in g["options"]}
+    if len(set(option_ids)) != len(option_ids) or any(i not in by_id for i in option_ids):
+        raise ValidationError({"items": f"Opciones no válidas para {product.name}."})
+    chosen = [by_id[i] for i in option_ids]
+    for group in groups:
+        count = sum(1 for g, _ in chosen if g["id"] == group["id"])
+        if count < group["required"] or count > group["max_select"]:
+            rule = (
+                f"elige {group['required']}"
+                if group["required"] == group["max_select"]
+                else f"elige de {group['required']} a {group['max_select']}"
+            )
+            raise ValidationError({"items": f"{product.name}: en «{group['name']}» {rule}."})
+    return [
+        {"group": g["name"], "name": o["name"], "price_delta": str(o["price_delta"])} for g, o in chosen
+    ]
+
+
 @transaction.atomic
 def create_order(*, tenant, branch, customer, items, notes=""):
-    """items: lista de {"product": id, "quantity": n}."""
-    quantities = {}
-    for item in items:
-        quantities[item["product"]] = quantities.get(item["product"], 0) + item["quantity"]
+    """items: lista de líneas {"product": id, "quantity": n, "options": [id, ...], "notes": "..."}.
 
+    Cada línea es independiente: el mismo producto con otras opciones o notas es otra línea.
+    """
+    product_ids = {item["product"] for item in items}
     products = {
         p.pk: p
-        for p in Product.objects.for_tenant(tenant).filter(pk__in=quantities, is_active=True)
+        for p in Product.objects.for_tenant(tenant).filter(pk__in=product_ids, is_active=True)
     }
     hidden = set(
         BranchProduct.objects.for_tenant(tenant)
-        .filter(branch=branch, is_available=False, product_id__in=quantities)
+        .filter(branch=branch, is_available=False, product_id__in=product_ids)
         .values_list("product_id", flat=True)
     )
-    missing = [pk for pk in quantities if pk not in products or pk in hidden]
+    missing = [pk for pk in product_ids if pk not in products or pk in hidden]
     if missing:
         raise ValidationError({"items": f"Productos no disponibles en esta sucursal: {sorted(missing)}"})
 
-    lines = [(products[pk], qty) for pk, qty in quantities.items()]
-    prep = own_prep_minutes(lines)
+    groups = option_groups_for(list(products.values()))
+    lines = []  # (producto, cantidad, opciones elegidas, notas, precio unitario con extras)
+    for item in items:
+        product = products[item["product"]]
+        chosen = choose_options(product, groups[product.pk], item.get("options", []))
+        unit_price = product.price + sum(Decimal(o["price_delta"]) for o in chosen)
+        lines.append((product, item["quantity"], chosen, item.get("notes", "").strip(), unit_price))
+
+    prep = own_prep_minutes([(product, qty) for product, qty, *_ in lines])
     eta = kitchen_backlog_minutes(tenant, branch) + prep
     order = Order.objects.create(
         tenant=tenant,
         branch=branch,
         customer=customer,
         notes=notes,
-        total=sum(p.price * qty for p, qty in lines),
+        total=sum(unit * qty for _, qty, _, _, unit in lines),
         prep_minutes=prep,
         estimated_ready_at=timezone.now() + timedelta(minutes=eta),
     )
     OrderItem.objects.bulk_create(
         [
             OrderItem(
-                tenant=tenant, order=order, product=p, name=p.name, unit_price=p.price, quantity=qty
+                tenant=tenant,
+                order=order,
+                product=product,
+                name=product.name,
+                unit_price=unit,
+                quantity=qty,
+                options=chosen,
+                notes=line_notes,
             )
-            for p, qty in lines
+            for product, qty, chosen, line_notes, unit in lines
         ]
     )
     # lambda y no partial: con robust=True Django lee func.__qualname__ al registrar el error.
