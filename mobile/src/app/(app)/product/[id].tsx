@@ -1,3 +1,4 @@
+import { BottomBar } from "@/components/bottom-bar";
 import { ProductThumb } from "@/components/product-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function ruleText(group: OptionGroup): string {
   if (group.max_select === 1) return "Elegir 1";
@@ -23,6 +25,7 @@ export default function ProductDetail() {
   const router = useRouter();
   const cart = useCart();
   const palette = usePalette();
+  const insets = useSafeAreaInsets();
   const { data: menu, error } = useApi<Menu>(`/api/branches/${branch}/menu/`);
   const [chosen, setChosen] = useState<Record<number, number[]>>({});
   const [notes, setNotes] = useState("");
@@ -69,7 +72,7 @@ export default function ProductDetail() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="items-center pb-44">
+      <ScrollView contentContainerClassName="items-center" contentContainerStyle={{ paddingBottom: 170 + insets.bottom }}>
         <View className="w-full max-w-md gap-6 p-4">
           <ProductThumb product={product} className="aspect-video w-full" />
           <View className="gap-1">
@@ -137,31 +140,29 @@ export default function ProductDetail() {
         </View>
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 items-center gap-2 border-t border-border bg-background p-4">
-        <View className="w-full max-w-md gap-3">
-          {missing.length > 0 ? (
-            <Text className="text-center text-sm text-muted-foreground">
-              Falta elegir: {missing.map((g) => g.name).join(", ")}
-            </Text>
-          ) : null}
+      <BottomBar>
+        {missing.length > 0 ? (
+          <Text className="text-center text-sm text-muted-foreground">
+            Falta elegir: {missing.map((g) => g.name).join(", ")}
+          </Text>
+        ) : null}
+        <View className="flex-row items-center gap-3">
           <View className="flex-row items-center gap-3">
-            <View className="flex-row items-center gap-3">
-              <Button size="icon" variant="outline" onPress={() => setQuantity((q) => Math.max(1, q - 1))} accessibilityLabel="Quitar uno">
-                <Text>−</Text>
-              </Button>
-              <Text className="w-6 text-center text-lg font-semibold">{quantity}</Text>
-              <Button size="icon" variant="outline" onPress={() => setQuantity((q) => Math.min(20, q + 1))} accessibilityLabel="Agregar uno">
-                <Text>+</Text>
-              </Button>
-            </View>
-            <View className="flex-1">
-              <Button size="lg" disabled={missing.length > 0} onPress={addToCart}>
-                <Text>Agregar · {money(total)}</Text>
-              </Button>
-            </View>
+            <Button size="icon" variant="outline" onPress={() => setQuantity((q) => Math.max(1, q - 1))} accessibilityLabel="Quitar uno">
+              <Text>−</Text>
+            </Button>
+            <Text className="w-6 text-center text-lg font-semibold">{quantity}</Text>
+            <Button size="icon" variant="outline" onPress={() => setQuantity((q) => Math.min(20, q + 1))} accessibilityLabel="Agregar uno">
+              <Text>+</Text>
+            </Button>
+          </View>
+          <View className="flex-1">
+            <Button size="lg" disabled={missing.length > 0} onPress={addToCart}>
+              <Text>Agregar · {money(total)}</Text>
+            </Button>
           </View>
         </View>
-      </View>
+      </BottomBar>
     </View>
   );
 }

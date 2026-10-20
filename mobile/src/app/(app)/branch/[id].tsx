@@ -9,9 +9,11 @@ import { useApi } from "@/lib/use-api";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function BranchMenu() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
   const { data: menu, error, reload } = useApi<Menu>(`/api/branches/${id}/menu/`);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<number | null>(null);
@@ -42,7 +44,11 @@ export default function BranchMenu() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="items-center pb-28" keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerClassName="items-center"
+        contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View className="w-full max-w-md gap-5 p-4">
           <Input
             value={query}

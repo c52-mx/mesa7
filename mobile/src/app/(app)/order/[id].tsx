@@ -8,9 +8,11 @@ import { STATUS_LABEL, STATUS_SHORT, STATUS_STEPS } from "@/lib/status";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function OrderTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => watchOrder(Number(id), setOrder), [id]);
@@ -27,7 +29,11 @@ export default function OrderTracking() {
   const currentStep = STATUS_STEPS.indexOf(order.status);
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="items-center p-4">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="items-center p-4"
+      contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
+    >
       <View className="w-full max-w-md gap-4">
         <View className="items-center gap-2 py-4">
           <Text className="text-sm text-muted-foreground">Pedido #{order.id}</Text>

@@ -39,6 +39,8 @@ export type Product = {
   description: string;
   price: string;
   image_url: string;
+  /** Ilustración de la categoría (cafe, cold, food, dessert, burger, drink, fruit). */
+  icon: string;
   is_featured: boolean;
   prep_time_minutes: number;
   option_groups: OptionGroup[];

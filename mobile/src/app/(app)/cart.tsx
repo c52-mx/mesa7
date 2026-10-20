@@ -7,12 +7,16 @@ import { Text } from "@/components/ui/text";
 import { api, errorMessage, type Order } from "@/lib/api";
 import { useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
+import { useOrderAlerts } from "@/lib/order-alerts";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Cart() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { track } = useOrderAlerts();
   const cart = useCart();
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,6 +52,7 @@ export default function Cart() {
         },
       });
       cart.clear();
+      track(order.id); // desde ya se le avisa de cada cambio, aunque salga de la pantalla de seguimiento
       router.replace(`/order/${order.id}`);
     } catch (e) {
       setError(errorMessage(e));
@@ -56,7 +61,11 @@ export default function Cart() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="items-center p-4">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerClassName="items-center p-4"
+      contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
+    >
       <View className="w-full max-w-md gap-4">
         <Text className="text-xl font-semibold">{cart.branch.name}</Text>
 

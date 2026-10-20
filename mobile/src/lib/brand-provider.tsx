@@ -25,21 +25,35 @@ const FALLBACK: Branding = {
 const BrandContext = createContext<Branding>(FALLBACK);
 export const useBrand = () => useContext(BrandContext);
 
+/** false mientras se carga la marca por primera vez (para no mostrar un instante el tema neutro). */
+const ReadyContext = createContext(false);
+export const useBrandReady = () => useContext(ReadyContext);
+
+// Si el servidor tarda, se sigue con lo que haya en vez de dejar la pantalla de carga.
+const READY_TIMEOUT_MS = 2000;
+
 // Paleta derivada del tenant (para íconos, barras y otros colores que no pasan por clases).
 const PaletteContext = createContext<Palette>(brandPalette(FALLBACK.primary_color, FALLBACK.secondary_color, "light"));
 export const usePalette = () => useContext(PaletteContext);
 
 export function BrandProvider({ children }: { children: ReactNode }) {
   const [branding, setBranding] = useState<Branding>(FALLBACK);
+  const [ready, setReady] = useState(false);
   const { colorScheme } = useColorScheme();
   const mode = colorScheme === "dark" ? "dark" : "light";
 
   useEffect(() => {
     let alive = true;
+    const finish = () => alive && setReady(true);
     // Última marca conocida al instante, y luego la del servidor.
     storage
       .get(CACHE_KEY)
-      .then((cached) => cached && alive && setBranding(JSON.parse(cached)))
+      .then((cached) => {
+        if (cached && alive) {
+          setBranding(JSON.parse(cached));
+          finish();
+        }
+      })
       .catch(() => {});
     api<Branding>(`/api/tenants/${TENANT_SLUG}/`, { auth: false })
       .then((fresh) => {
@@ -47,9 +61,12 @@ export function BrandProvider({ children }: { children: ReactNode }) {
         setBranding(fresh);
         storage.set(CACHE_KEY, JSON.stringify(fresh)).catch(() => {});
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(finish);
+    const timeout = setTimeout(finish, READY_TIMEOUT_MS);
     return () => {
       alive = false;
+      clearTimeout(timeout);
     };
   }, []);
 
@@ -79,6 +96,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
 
   return (
     <BrandContext.Provider value={branding}>
+      <ReadyContext.Provider value={ready}>
       <PaletteContext.Provider value={palette}>
         <ThemeProvider value={navTheme}>
           <StatusBar style={mode === "dark" ? "light" : "dark"} />
@@ -89,6 +107,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
           </View>
         </ThemeProvider>
       </PaletteContext.Provider>
+      </ReadyContext.Provider>
     </BrandContext.Provider>
   );
 }

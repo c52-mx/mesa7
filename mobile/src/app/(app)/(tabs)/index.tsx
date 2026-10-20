@@ -1,4 +1,5 @@
 import { BannerCarousel } from "@/components/banner-carousel";
+import { BrandLogo } from "@/components/brand-logo";
 import { BranchPicker } from "@/components/branch-picker";
 import { CartBar } from "@/components/cart-bar";
 import { ProductCard } from "@/components/product-card";
@@ -42,9 +43,12 @@ export default function Home() {
       <ScrollView contentContainerClassName="items-center px-4 pb-28 pt-14">
         <View className="w-full max-w-md gap-6">
           <View className="gap-4">
-            <View className="gap-1">
-              <Text className="text-xs uppercase tracking-widest text-muted-foreground">Bienvenido</Text>
-              <Text className="text-3xl font-bold">Hola{me ? `, ${firstName(me)}` : ""}</Text>
+            <View className="flex-row items-center justify-between gap-3">
+              <View className="flex-1 gap-1">
+                <Text className="text-xs uppercase tracking-widest text-muted-foreground">Bienvenido a {brand.name}</Text>
+                <Text className="text-3xl font-bold">Hola{me ? `, ${firstName(me)}` : ""}</Text>
+              </View>
+              <BrandLogo size={56} />
             </View>
             <BranchPicker />
           </View>
@@ -131,7 +135,7 @@ export default function Home() {
           ) : null}
         </View>
       </ScrollView>
-      <CartBar />
+      <CartBar inset={false} />
     </View>
   );
 }

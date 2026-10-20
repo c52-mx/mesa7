@@ -1,13 +1,15 @@
 import "../../global.css";
 
 import { AuthProvider, useAuth } from "@/lib/auth";
-import { BrandProvider } from "@/lib/brand-provider";
+import { BrandSplash } from "@/components/brand-splash";
+import { BrandProvider, useBrandReady } from "@/lib/brand-provider";
 import { CartProvider } from "@/lib/cart";
 import { Stack } from "expo-router";
 
 function RootNavigator() {
   const { session, loading } = useAuth();
-  if (loading) return null;
+  const brandReady = useBrandReady();
+  if (loading || !brandReady) return <BrandSplash />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
