@@ -9,7 +9,7 @@ from tenants.models import Branch
 
 from .models import Order
 from .payloads import order_payload
-from .services import change_status, create_order
+from .services import change_status, create_order, mark_paid
 
 
 class ItemSerializer(serializers.Serializer):
@@ -77,6 +77,18 @@ def kds_orders(request):
         raise serializers.ValidationError({"branch": "Indica la sucursal (?branch=<id>)."})
     active = _orders(tenant).filter(branch_id=branch_id, status__in=Order.ACTIVE).order_by("created_at")
     return Response([order_payload(o, kds=True) for o in active])
+
+
+@api_view(["POST"])
+def kds_mark_paid(request, order_id):
+    tenant = resolve_staff_tenant(request)
+    with transaction.atomic():
+        try:
+            order = Order.objects.for_tenant(tenant).select_for_update().get(pk=order_id)
+        except Order.DoesNotExist:
+            raise Http404
+        mark_paid(order)
+    return Response(order_payload(_orders(tenant).get(pk=order.pk), kds=True))
 
 
 @api_view(["POST"])

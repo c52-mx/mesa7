@@ -72,4 +72,4 @@ class MembershipAdmin(admin.ModelAdmin):
 
 @admin.register(Branch)
 class BranchAdmin(TenantAdminMixin, admin.ModelAdmin):
-    list_display = ("name", "tenant", "is_active")
+    list_display = ("name", "tenant", "phone", "is_active")

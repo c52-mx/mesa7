@@ -131,6 +131,15 @@ def create_order(*, tenant, branch, customer, items, notes="", payment_method=Or
     return order
 
 
+def mark_paid(order):
+    """El personal registra el cobro en caja. Es idempotente."""
+    if order.payment_status != Order.PaymentStatus.PAID:
+        order.payment_status = Order.PaymentStatus.PAID
+        order.save(update_fields=["payment_status"])
+        transaction.on_commit(lambda: publish_order(order.pk), robust=True)
+    return order
+
+
 def change_status(order, new_status, *, force=False):
     """Cambia el estado y avisa (tiempo real, push, puntos).
 

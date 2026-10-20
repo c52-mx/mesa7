@@ -74,6 +74,10 @@ class LoyaltyTransaction(TenantModel):
     kind = models.CharField(max_length=10, choices=Kind.choices)
     order = models.ForeignKey("orders.Order", null=True, blank=True, on_delete=models.PROTECT, related_name="+")
     note = models.CharField(max_length=200, blank=True)
+    # Quién lo hizo en caja (canjes y compras de mostrador); vacío en lo automático.
+    staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

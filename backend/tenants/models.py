@@ -87,6 +87,8 @@ class Membership(models.Model):
 class Branch(TenantModel):
     name = models.CharField(max_length=120)
     address = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    hours = models.CharField(max_length=120, blank=True, help_text="Texto libre, por ejemplo: Todos los días · cierra 10 p. m.")
     is_active = models.BooleanField(default=True)
 
     class Meta:

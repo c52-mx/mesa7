@@ -23,7 +23,9 @@ def group_payload(group):
 def branches(request):
     tenant = resolve_tenant(request)
     qs = Branch.objects.for_tenant(tenant).filter(is_active=True).order_by("name")
-    return Response([{"id": b.id, "name": b.name, "address": b.address} for b in qs])
+    return Response(
+        [{"id": b.id, "name": b.name, "address": b.address, "phone": b.phone, "hours": b.hours} for b in qs]
+    )
 
 
 @api_view(["GET"])
