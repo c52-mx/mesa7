@@ -1,3 +1,4 @@
+import { CartBar } from "@/components/cart-bar";
 import { Stepper } from "@/components/stepper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Text } from "@/components/ui/text";
 import { api, errorMessage, type Menu } from "@/lib/api";
 import { useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
-import { Link, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 
@@ -81,19 +82,7 @@ export default function BranchMenu() {
         </View>
       </ScrollView>
 
-      {cart.count > 0 && cart.branch?.id === menu.branch.id ? (
-        <View className="absolute bottom-0 left-0 right-0 items-center border-t border-border bg-background p-4">
-          <View className="w-full max-w-md">
-            <Link href="/cart" asChild>
-              <Button size="lg">
-                <Text>
-                  Ver pedido · {cart.count} · {money(cart.total)}
-                </Text>
-              </Button>
-            </Link>
-          </View>
-        </View>
-      ) : null}
+      <CartBar branchId={menu.branch.id} />
     </View>
   );
 }

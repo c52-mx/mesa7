@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { View } from "react-native";
 
 import { api, type Branding } from "./api";
-import { brandPalette, isHex, paletteVars } from "./brand";
+import { brandPalette, isHex, paletteVars, type Palette } from "./brand";
 import { TENANT_SLUG } from "./config";
 import { storage } from "./storage";
 
@@ -19,10 +19,15 @@ const FALLBACK: Branding = {
   primary_color: "#171717",
   secondary_color: "#F5F5F5",
   logo_url: "",
+  loyalty_enabled: false,
 };
 
 const BrandContext = createContext<Branding>(FALLBACK);
 export const useBrand = () => useContext(BrandContext);
+
+// Paleta derivada del tenant (para íconos, barras y otros colores que no pasan por clases).
+const PaletteContext = createContext<Palette>(brandPalette(FALLBACK.primary_color, FALLBACK.secondary_color, "light"));
+export const usePalette = () => useContext(PaletteContext);
 
 export function BrandProvider({ children }: { children: ReactNode }) {
   const [branding, setBranding] = useState<Branding>(FALLBACK);
@@ -74,14 +79,16 @@ export function BrandProvider({ children }: { children: ReactNode }) {
 
   return (
     <BrandContext.Provider value={branding}>
-      <ThemeProvider value={navTheme}>
-        <StatusBar style={mode === "dark" ? "light" : "dark"} />
-        {/* Las variables CSS van en la raíz; PortalHost va dentro para que los diálogos las hereden. */}
-        <View style={[{ flex: 1 }, vars(paletteVars(palette))]}>
-          {children}
-          <PortalHost />
-        </View>
-      </ThemeProvider>
+      <PaletteContext.Provider value={palette}>
+        <ThemeProvider value={navTheme}>
+          <StatusBar style={mode === "dark" ? "light" : "dark"} />
+          {/* Las variables CSS van en la raíz; PortalHost va dentro para que los diálogos las hereden. */}
+          <View style={[{ flex: 1 }, vars(paletteVars(palette))]}>
+            {children}
+            <PortalHost />
+          </View>
+        </ThemeProvider>
+      </PaletteContext.Provider>
     </BrandContext.Provider>
   );
 }

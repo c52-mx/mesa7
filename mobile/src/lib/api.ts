@@ -8,6 +8,20 @@ export type Branding = {
   primary_color: string;
   secondary_color: string;
   logo_url: string;
+  loyalty_enabled: boolean;
+};
+export type Banner = { id: number; title: string; text: string; image_url: string };
+export type Me = { email: string; full_name: string; phone: string };
+export type LoyaltyReward = { id: number; name: string; points_required: number; unlocked: boolean };
+export type Loyalty = {
+  name: string;
+  member_code: string;
+  qr: string;
+  points: number;
+  spend_per_point: string;
+  rewards: LoyaltyReward[];
+  next_reward: (LoyaltyReward & { missing: number }) | null;
+  recent: { points: number; kind: "earn" | "redeem" | "adjust"; note: string; created_at: string }[];
 };
 export type Branch = { id: number; name: string; address: string };
 export type Product = {
