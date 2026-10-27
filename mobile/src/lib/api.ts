@@ -14,6 +14,9 @@ export type Branding = {
   kds_enabled: boolean;
 };
 export type Banner = { id: number; title: string; text: string; image_url: string };
+/** Producto con su disponibilidad en una sucursal, para marcar agotados. */
+export type StaffProduct = { id: number; name: string; category: string; is_available: boolean };
+export type StaffBanner = Banner & { is_active: boolean };
 export type Me = { email: string; full_name: string; phone: string };
 export type LoyaltyReward = { id: number; name: string; points_required: number; unlocked: boolean };
 export type Loyalty = {

@@ -64,6 +64,14 @@ export default function TabsLayout() {
           href: isStaff && brand.loyalty_enabled ? undefined : null,
         }}
       />
+      <Tabs.Screen
+        name="catalog"
+        options={{
+          title: "Catálogo",
+          tabBarIcon: icon("pricetags", "pricetags-outline"),
+          href: isStaff ? undefined : null,
+        }}
+      />
       <Tabs.Screen name="profile" options={{ title: "Perfil", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );

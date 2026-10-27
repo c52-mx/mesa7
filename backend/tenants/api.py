@@ -67,9 +67,10 @@ def require_module(tenant, flag):
     return tenant
 
 
-def resolve_staff_tenant(request):
-    """Tenant de la petición, solo si el usuario es dueño o staff de ese negocio."""
+def resolve_staff_tenant(request, owner_only=False):
+    """Tenant de la petición, solo si el usuario es dueño o staff (solo dueño con `owner_only`) de ese negocio."""
     membership = resolve_membership(request)
-    if membership.role not in (Membership.Role.OWNER, Membership.Role.STAFF):
-        raise PermissionDenied("Solo el personal del negocio puede hacer esto.")
+    allowed = (Membership.Role.OWNER,) if owner_only else (Membership.Role.OWNER, Membership.Role.STAFF)
+    if membership.role not in allowed:
+        raise PermissionDenied("Solo el dueño del negocio puede hacer esto." if owner_only else "Solo el personal del negocio puede hacer esto.")
     return membership.tenant

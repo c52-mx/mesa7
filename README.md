@@ -50,6 +50,7 @@ Los usuarios con rol **dueño** o **staff** en el negocio (se asigna en el admin
 - **Caja:** escanea el QR de la tarjeta (o escribe el código de 12 dígitos), canjea recompensas y suma puntos por compras de mostrador.
 
 API: `GET /api/staff/loyalty/lookup/?code=`, `POST /api/staff/loyalty/redeem/` y `/earn/` (`amount` y `reference` opcional con el folio del ticket del POS; un folio no se acepta dos veces), `GET /api/staff/loyalty/report/?date=AAAA-MM-DD` (compras de mostrador del día por cajero), `POST /api/kds/orders/<id>/paid/`.
+- **Catálogo:** el personal marca productos agotados por sucursal (`GET /api/staff/availability/?branch=<id>`, `POST /api/staff/availability/set/`) y el dueño enciende o apaga promociones (`GET /api/staff/banners/`, `PATCH /api/staff/banners/<id>/`). Crear o editar textos, precios y fotos sigue siendo en el admin.
 
 ## Módulos por negocio
 

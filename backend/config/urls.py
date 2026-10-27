@@ -4,8 +4,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import LoginView, RegisterView, devices, me
 from loyalty.views import loyalty, staff_earn, staff_lookup, staff_redeem, staff_report
-from promos.views import banners
-from menu.views import branch_menu, branches
+from promos.views import banners, staff_banner_toggle, staff_banners
+from menu.views import branch_menu, branches, staff_availability, staff_set_availability
 
 from tenants.api import tenant_branding
 from orders.views import kds_mark_paid, kds_orders, kds_set_status, order_detail, orders
@@ -27,6 +27,10 @@ urlpatterns = [
     path("api/staff/loyalty/earn/", staff_earn),
     path("api/staff/loyalty/report/", staff_report),
     path("api/banners/", banners),
+    path("api/staff/availability/", staff_availability),
+    path("api/staff/availability/set/", staff_set_availability),
+    path("api/staff/banners/", staff_banners),
+    path("api/staff/banners/<int:banner_id>/", staff_banner_toggle),
     path("api/branches/", branches),
     path("api/branches/<int:branch_id>/menu/", branch_menu),
     path("api/orders/", orders),
