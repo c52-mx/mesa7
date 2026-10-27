@@ -21,10 +21,12 @@ function firstName(me: Me | null): string {
   return (me.full_name || me.email.split("@")[0]).split(" ")[0];
 }
 
-/** El personal no ve el inicio de clientes: va directo a los pedidos. */
+/** El personal no ve el inicio de clientes: va directo a los pedidos, o a la caja si no tiene el tablero. */
 export default function Home() {
   const { isStaff } = useAuth();
-  return isStaff ? <Redirect href="/kds" /> : <CustomerHome />;
+  const brand = useBrand();
+  if (!isStaff) return <CustomerHome />;
+  return <Redirect href={brand.kds_enabled ? "/kds" : brand.loyalty_enabled ? "/caja" : "/profile"} />;
 }
 
 function CustomerHome() {
@@ -36,7 +38,7 @@ function CustomerHome() {
   const me = useApi<Me>("/api/me/").data;
   const banners = useApi<Banner[]>("/api/banners/").data ?? [];
   const loyalty = useApi<Loyalty>(brand.loyalty_enabled ? "/api/loyalty/" : null).data;
-  const menu = useApi<Menu>(selected ? `/api/branches/${selected.id}/menu/` : null).data;
+  const menu = useApi<Menu>(selected && brand.orders_enabled ? `/api/branches/${selected.id}/menu/` : null).data;
 
   const categories = menu?.categories ?? [];
   const products = categories
@@ -83,6 +85,8 @@ function CustomerHome() {
 
           <BannerCarousel banners={banners} />
 
+          {brand.orders_enabled ? (
+          <>
           <View className="gap-3">
             <View className="flex-row items-center justify-between">
               <Text className="text-xs uppercase tracking-widest text-muted-foreground">Disponible en sucursal</Text>
@@ -138,6 +142,8 @@ function CustomerHome() {
             <Button size="lg" onPress={() => router.push(`/branch/${selected.id}`)}>
               <Text>Ordena ahora</Text>
             </Button>
+          ) : null}
+          </>
           ) : null}
         </View>
       </ScrollView>

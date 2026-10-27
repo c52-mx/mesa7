@@ -22,7 +22,7 @@ export default function TabsLayout() {
 
   // Las pestañas que no corresponden al rol se ocultan (href: null), no se eliminan.
   const customer = isStaff ? null : undefined;
-  const staff = isStaff ? undefined : null;
+  const ordering = !isStaff && brand.orders_enabled ? undefined : null;
 
   return (
     <Tabs
@@ -34,7 +34,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Inicio", tabBarIcon: icon("home", "home-outline"), href: customer }} />
-      <Tabs.Screen name="order" options={{ title: "Ordena", tabBarIcon: icon("cafe", "cafe-outline"), href: customer }} />
+      <Tabs.Screen name="order" options={{ title: "Ordena", tabBarIcon: icon("cafe", "cafe-outline"), href: ordering }} />
       {/* El contador está siempre a la vista, igual que en Uber Eats. */}
       <Tabs.Screen
         name="cart"
@@ -43,7 +43,7 @@ export default function TabsLayout() {
           tabBarIcon: icon("cart", "cart-outline"),
           tabBarBadge: cart.count > 0 ? cart.count : undefined,
           tabBarBadgeStyle: { backgroundColor: palette.primary, color: palette.primaryForeground },
-          href: customer,
+          href: ordering,
         }}
       />
       {/* Si el negocio apaga la lealtad, la pestaña desaparece. */}
@@ -55,7 +55,7 @@ export default function TabsLayout() {
           href: !isStaff && brand.loyalty_enabled ? undefined : null,
         }}
       />
-      <Tabs.Screen name="kds" options={{ title: "Pedidos", tabBarIcon: icon("receipt", "receipt-outline"), href: staff }} />
+      <Tabs.Screen name="kds" options={{ title: "Pedidos", tabBarIcon: icon("receipt", "receipt-outline"), href: isStaff && brand.kds_enabled ? undefined : null }} />
       <Tabs.Screen
         name="caja"
         options={{

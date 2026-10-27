@@ -8,7 +8,10 @@ export type Branding = {
   primary_color: string;
   secondary_color: string;
   logo_url: string;
+  /** Módulos contratados por el negocio. */
   loyalty_enabled: boolean;
+  orders_enabled: boolean;
+  kds_enabled: boolean;
 };
 export type Banner = { id: number; title: string; text: string; image_url: string };
 export type Me = { email: string; full_name: string; phone: string };
@@ -35,6 +38,15 @@ export type KdsOrder = Order & {
 
 /** Tarjeta de un cliente vista desde caja. */
 export type CustomerCard = Omit<Loyalty, "name" | "recent"> & { customer: string; recent: Loyalty["recent"] };
+/** Compras de mostrador de un día, con totales por cajero. */
+export type CounterReport = {
+  date: string;
+  count: number;
+  amount: string;
+  points: number;
+  by_staff: { staff: string; count: number; amount: string }[];
+  purchases: { created_at: string; customer: string; amount: string; points: number; reference: string; staff: string }[];
+};
 export type Option = { id: number; name: string; price_delta: string; is_popular: boolean };
 export type OptionGroup = {
   id: number;

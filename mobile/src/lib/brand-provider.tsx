@@ -20,6 +20,8 @@ const FALLBACK: Branding = {
   secondary_color: "#F5F5F5",
   logo_url: "",
   loyalty_enabled: false,
+  orders_enabled: true,
+  kds_enabled: true,
 };
 
 const BrandContext = createContext<Branding>(FALLBACK);
@@ -50,7 +52,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
       .get(CACHE_KEY)
       .then((cached) => {
         if (cached && alive) {
-          setBranding(JSON.parse(cached));
+          setBranding({ ...FALLBACK, ...JSON.parse(cached) }); // una marca guardada antes de los módulos no los trae
           finish();
         }
       })

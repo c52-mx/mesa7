@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
-import { api, errorMessage, type CustomerCard } from "@/lib/api";
+import { api, errorMessage, type CounterReport, type CustomerCard } from "@/lib/api";
 import { usePalette } from "@/lib/brand-provider";
+import { money } from "@/lib/format";
 import { formatMemberCode } from "@/lib/loyalty";
+import { useApi } from "@/lib/use-api";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRef, useState } from "react";
@@ -20,6 +22,8 @@ export default function Caja() {
   const [card, setCard] = useState<CustomerCard | null>(null);
   const [manual, setManual] = useState("");
   const [amount, setAmount] = useState("");
+  const [reference, setReference] = useState("");
+  const report = useApi<CounterReport>("/api/staff/loyalty/report/");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const scanLock = useRef(false); // el lector dispara varias veces por el mismo QR
@@ -30,6 +34,7 @@ export default function Caja() {
     try {
       setCard(await api<CustomerCard>(`/api/staff/loyalty/lookup/?code=${enc(raw)}`));
       setAmount("");
+      setReference("");
     } catch (e) {
       setMessage({ text: errorMessage(e), ok: false });
       // Pausa corta: si no, el lector volvería a leer el mismo QR en cada cuadro.
@@ -67,6 +72,7 @@ export default function Caja() {
     setManual("");
     setMessage(null);
     scanLock.current = false;
+    report.reload();
   }
 
   const perPoint = card ? Number(card.spend_per_point) : 0;
@@ -128,6 +134,28 @@ export default function Caja() {
                 <Text>Buscar tarjeta</Text>
               </Button>
             </View>
+
+            {report.data ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compras de hoy</CardTitle>
+                </CardHeader>
+                <CardContent className="gap-2">
+                  <Text className="text-2xl font-bold">{money(report.data.amount)}</Text>
+                  <Text className="text-muted-foreground">
+                    {report.data.count} compra{report.data.count === 1 ? "" : "s"} · {report.data.points} puntos
+                  </Text>
+                  {report.data.by_staff.map((row) => (
+                    <View key={row.staff} className="flex-row justify-between">
+                      <Text>{row.staff}</Text>
+                      <Text className="text-muted-foreground">
+                        {row.count} · {money(row.amount)}
+                      </Text>
+                    </View>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
           </>
         ) : (
           <>
@@ -169,13 +197,18 @@ export default function Caja() {
               <CardContent className="gap-3">
                 <Label nativeID="amount">Monto de la compra ($)</Label>
                 <Input aria-labelledby="amount" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" />
+                <Label nativeID="reference">Folio del ticket (opcional)</Label>
+                <Input aria-labelledby="reference" value={reference} onChangeText={setReference} maxLength={40} autoCapitalize="characters" placeholder="Folio de tu POS" />
                 <Text className="text-sm text-muted-foreground">
                   {preview > 0 ? `Sumará ${preview} punto${preview === 1 ? "" : "s"}` : `1 punto por cada $${perPoint}`}
                 </Text>
                 <Button
                   disabled={busy || preview <= 0}
                   onPress={async () => {
-                    if (await act("earn", { amount: amount.replace(",", ".") }, `Se sumaron ${preview} puntos.`)) setAmount("");
+                    if (await act("earn", { amount: amount.replace(",", "."), reference }, `Se sumaron ${preview} puntos.`)) {
+                      setAmount("");
+                      setReference("");
+                    }
                   }}
                 >
                   <Text>Sumar puntos</Text>
