@@ -13,6 +13,12 @@
         "EXPO_PUBLIC_API_URL": "http://31.220.60.177:8010",
         "EXPO_PUBLIC_TENANT": "cafecin"
       }
+    },
+    "preview-simulator": {
+      "extends": "preview",
+      "ios": {
+        "simulator": true
+      }
     }
   }
 }

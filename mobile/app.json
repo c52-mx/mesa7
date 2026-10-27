@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.codigo52.mesa7",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "package": "com.codigo52.mesa7",
@@ -52,6 +58,12 @@
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ecbe43c4-e4f9-4aad-9500-9afbe5a80eac"
+      }
     }
   }
 }

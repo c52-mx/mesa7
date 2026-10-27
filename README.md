@@ -49,7 +49,11 @@ Los usuarios con rol **dueño** o **staff** en el negocio (se asigna en el admin
 - **Pedidos:** tablero en vivo por sucursal con semáforo; preparar, listo, entregado, cancelar y cobrar.
 - **Caja:** escanea el QR de la tarjeta (o escribe el código de 12 dígitos), canjea recompensas y suma puntos por compras de mostrador.
 
-API: `GET /api/staff/loyalty/lookup/?code=`, `POST /api/staff/loyalty/redeem/` y `/earn/`, `POST /api/kds/orders/<id>/paid/`.
+API: `GET /api/staff/loyalty/lookup/?code=`, `POST /api/staff/loyalty/redeem/` y `/earn/` (`amount` y `reference` opcional con el folio del ticket del POS; un folio no se acepta dos veces), `GET /api/staff/loyalty/report/?date=AAAA-MM-DD` (compras de mostrador del día por cajero), `POST /api/kds/orders/<id>/paid/`.
+
+## Módulos por negocio
+
+En el admin, cada negocio tiene interruptores por módulo: `loyalty_enabled` (tarjeta, puntos y caja), `orders_enabled` (menú, carrito y pedidos) y `kds_enabled` (tablero de pedidos del personal). Lo apagado se oculta en la app y la API responde 404.
 
 ## Datos de demostración
 
