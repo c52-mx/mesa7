@@ -27,6 +27,6 @@ class LoyaltyAccountAdmin(TenantAdminMixin, admin.ModelAdmin):
 class LoyaltyTransactionAdmin(TenantAdminMixin, admin.ModelAdmin):
     """Libro de movimientos. Los ajustes manuales (regalar o corregir puntos) se hacen aquí."""
 
-    list_display = ("account", "points", "kind", "note", "created_at")
+    list_display = ("account", "points", "kind", "amount", "reference", "staff", "note", "created_at")
     list_filter = ("kind",)
-    search_fields = ("account__user__email", "account__member_code")
+    search_fields = ("account__user__email", "account__member_code", "reference")

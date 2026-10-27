@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import LoginView, RegisterView, devices, me
-from loyalty.views import loyalty, staff_earn, staff_lookup, staff_redeem
+from loyalty.views import loyalty, staff_earn, staff_lookup, staff_redeem, staff_report
 from promos.views import banners
 from menu.views import branch_menu, branches
 
@@ -25,6 +25,7 @@ urlpatterns = [
     path("api/staff/loyalty/lookup/", staff_lookup),
     path("api/staff/loyalty/redeem/", staff_redeem),
     path("api/staff/loyalty/earn/", staff_earn),
+    path("api/staff/loyalty/report/", staff_report),
     path("api/banners/", banners),
     path("api/branches/", branches),
     path("api/branches/<int:branch_id>/menu/", branch_menu),

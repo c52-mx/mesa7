@@ -65,6 +65,32 @@ class OrderTests(TestCase):
         self.latte.save()
         self.assertEqual(Order.objects.get().items.get().unit_price, 55)
 
+    def test_disabled_orders_module_blocks_customers_but_not_the_kds(self):
+        self.t1.orders_enabled = False
+        self.t1.save()
+        self.assertEqual(self.place(self.ana).status_code, 404)
+        self.assertEqual(self.as_user(self.ana).get("/api/orders/").status_code, 404)
+        self.assertEqual(Order.objects.count(), 0)
+        kds = self.as_user(self.staff).get(f"/api/kds/orders/?branch={self.branch.id}")
+        self.assertEqual(kds.status_code, 200)
+
+    def test_disabled_kds_module_blocks_the_board_but_not_customers(self):
+        self.t1.kds_enabled = False
+        self.t1.save()
+        self.assertEqual(self.place(self.ana).status_code, 201)
+        order = Order.objects.get()
+        staff = self.as_user(self.staff)
+        self.assertEqual(staff.get(f"/api/kds/orders/?branch={self.branch.id}").status_code, 404)
+        self.assertEqual(staff.post(f"/api/kds/orders/{order.pk}/status/", {"status": "preparing"}, format="json").status_code, 404)
+        self.assertEqual(staff.post(f"/api/kds/orders/{order.pk}/paid/").status_code, 404)
+
+    def test_branding_exposes_the_enabled_modules(self):
+        body = APIClient().get("/api/tenants/uno/").json()
+        self.assertEqual((body["orders_enabled"], body["kds_enabled"]), (True, True))
+        self.t1.orders_enabled = False
+        self.t1.save()
+        self.assertFalse(APIClient().get("/api/tenants/uno/").json()["orders_enabled"])
+
     def test_rejects_product_hidden_in_branch_or_other_tenant(self):
         for pid in (self.cake.id, self.foreign.id):
             response = self.place(self.ana, [{"product": pid, "quantity": 1}])

@@ -27,6 +27,8 @@ def tenant_branding(request, slug):
             "secondary_color": tenant.secondary_color,
             "logo_url": logo,
             "loyalty_enabled": tenant.loyalty_enabled,
+            "orders_enabled": tenant.orders_enabled,
+            "kds_enabled": tenant.kds_enabled,
         }
     )
 
@@ -56,6 +58,13 @@ def membership_for(user, slug=None):
 
 def resolve_tenant(request):
     return resolve_membership(request).tenant
+
+
+def require_module(tenant, flag):
+    """Rechaza (404) si el negocio no tiene contratado el módulo (`orders_enabled`, `kds_enabled`...)."""
+    if not getattr(tenant, flag):
+        raise NotFound("Este módulo no está activo en el negocio.")
+    return tenant
 
 
 def resolve_staff_tenant(request):

@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from tenants.api import resolve_staff_tenant, resolve_tenant
+from tenants.api import require_module, resolve_staff_tenant, resolve_tenant
 from tenants.models import Branch
 
 from .models import Order
@@ -36,7 +36,7 @@ def _orders(tenant):
 
 @api_view(["GET", "POST"])
 def orders(request):
-    tenant = resolve_tenant(request)
+    tenant = require_module(resolve_tenant(request), "orders_enabled")
     if request.method == "POST":
         serializer = OrderCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -60,7 +60,7 @@ def orders(request):
 
 @api_view(["GET"])
 def order_detail(request, order_id):
-    tenant = resolve_tenant(request)
+    tenant = require_module(resolve_tenant(request), "orders_enabled")
     try:
         order = _orders(tenant).get(pk=order_id, customer=request.user)
     except Order.DoesNotExist:
@@ -70,7 +70,7 @@ def order_detail(request, order_id):
 
 @api_view(["GET"])
 def kds_orders(request):
-    tenant = resolve_staff_tenant(request)
+    tenant = require_module(resolve_staff_tenant(request), "kds_enabled")
     try:
         branch_id = int(request.query_params.get("branch", ""))
     except ValueError:
@@ -81,7 +81,7 @@ def kds_orders(request):
 
 @api_view(["POST"])
 def kds_mark_paid(request, order_id):
-    tenant = resolve_staff_tenant(request)
+    tenant = require_module(resolve_staff_tenant(request), "kds_enabled")
     with transaction.atomic():
         try:
             order = Order.objects.for_tenant(tenant).select_for_update().get(pk=order_id)
@@ -93,7 +93,7 @@ def kds_mark_paid(request, order_id):
 
 @api_view(["POST"])
 def kds_set_status(request, order_id):
-    tenant = resolve_staff_tenant(request)
+    tenant = require_module(resolve_staff_tenant(request), "kds_enabled")
     new_status = request.data.get("status")
     with transaction.atomic():
         try:

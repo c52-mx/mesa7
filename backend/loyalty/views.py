@@ -1,11 +1,15 @@
+from datetime import date
+
 from django.http import Http404
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from tenants.api import resolve_staff_tenant, resolve_tenant
 
-from .services import customer_summary, earn_at_counter, find_account, redeem_reward, summary
+from .services import counter_report, customer_summary, earn_at_counter, find_account, redeem_reward, summary
 
 
 @api_view(["GET"])
@@ -28,6 +32,7 @@ class RedeemSerializer(LookupSerializer):
 
 class EarnSerializer(LookupSerializer):
     amount = serializers.CharField(max_length=20)
+    reference = serializers.CharField(max_length=40, required=False, allow_blank=True, default="")
 
 
 def _account(request, serializer_class):
@@ -54,5 +59,17 @@ def staff_redeem(request):
 @api_view(["POST"])
 def staff_earn(request):
     tenant, account, data = _account(request, EarnSerializer)
-    earn_at_counter(tenant, account, data["amount"], request.user)
+    earn_at_counter(tenant, account, data["amount"], request.user, data["reference"])
     return Response(customer_summary(tenant, account))
+
+
+@api_view(["GET"])
+def staff_report(request):
+    """Caja: compras de mostrador de un día (?date=AAAA-MM-DD, por defecto hoy)."""
+    tenant = resolve_staff_tenant(request)
+    raw = request.query_params.get("date")
+    try:
+        day = date.fromisoformat(raw) if raw else timezone.localdate()
+    except ValueError:
+        raise ValidationError({"date": "Fecha no válida."})
+    return Response(counter_report(tenant, day))

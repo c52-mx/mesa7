@@ -20,6 +20,13 @@ class Tenant(models.Model):
     loyalty_enabled = models.BooleanField(
         default=True, help_text="Si se apaga, la app oculta la tarjeta y los puntos."
     )
+    # Módulos contratables de la suite (la lealtad es el de arriba).
+    orders_enabled = models.BooleanField(
+        default=True, help_text="Pedidos móviles: si se apaga, la app oculta menú y carrito y la API rechaza pedidos."
+    )
+    kds_enabled = models.BooleanField(
+        default=True, help_text="Tablero de pedidos (KDS): si se apaga, el personal no lo ve."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

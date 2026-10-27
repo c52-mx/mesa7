@@ -74,6 +74,9 @@ class LoyaltyTransaction(TenantModel):
     kind = models.CharField(max_length=10, choices=Kind.choices)
     order = models.ForeignKey("orders.Order", null=True, blank=True, on_delete=models.PROTECT, related_name="+")
     note = models.CharField(max_length=200, blank=True)
+    # Compras de mostrador: monto del ticket y su folio en el POS del negocio (evita registrarlo dos veces).
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    reference = models.CharField(max_length=40, blank=True)
     # Quién lo hizo en caja (canjes y compras de mostrador); vacío en lo automático.
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
@@ -86,7 +89,12 @@ class LoyaltyTransaction(TenantModel):
             # Un pedido solo acumula puntos una vez.
             models.UniqueConstraint(
                 fields=["order"], condition=models.Q(kind="earn"), name="uniq_earn_per_order"
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "reference"],
+                condition=models.Q(kind="earn") & ~models.Q(reference=""),
+                name="uniq_earn_reference_per_tenant",
+            ),
         ]
 
     def __str__(self):

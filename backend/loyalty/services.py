@@ -137,9 +137,13 @@ def redeem_reward(tenant, account, reward_id, staff):
 
 
 @transaction.atomic
-def earn_at_counter(tenant, account, amount, staff):
-    """Suma puntos por una compra pagada en el mostrador, con el mismo valor que los pedidos."""
+def earn_at_counter(tenant, account, amount, staff, reference=""):
+    """Suma puntos por una compra pagada en el mostrador, con el mismo valor que los pedidos.
+
+    `reference` es el folio del ticket en el POS del negocio; si se repite, se rechaza.
+    """
     program = require_program(tenant)
+    reference = (reference or "").strip()
     try:
         amount = Decimal(str(amount))
     except InvalidOperation:
@@ -149,11 +153,57 @@ def earn_at_counter(tenant, account, amount, staff):
     points = int(amount // program.spend_per_point)
     if points <= 0:
         raise ValidationError({"amount": f"Se necesita al menos ${program.spend_per_point} para sumar un punto."})
-    return LoyaltyTransaction.objects.create(
-        tenant=tenant,
-        account=account,
-        points=points,
-        kind=LoyaltyTransaction.Kind.EARN,
-        note=f"Compra en mostrador ${amount.quantize(Decimal('0.01'))}",
-        staff=staff,
+    amount = amount.quantize(Decimal("0.01"))
+    duplicate = ValidationError({"reference": "Ese ticket ya se registró."})
+    if reference and LoyaltyTransaction.objects.for_tenant(tenant).filter(
+        kind=LoyaltyTransaction.Kind.EARN, reference=reference
+    ).exists():
+        raise duplicate
+    try:
+        with transaction.atomic():
+            return LoyaltyTransaction.objects.create(
+                tenant=tenant,
+                account=account,
+                points=points,
+                kind=LoyaltyTransaction.Kind.EARN,
+                note=f"Compra en mostrador ${amount}",
+                amount=amount,
+                reference=reference,
+                staff=staff,
+            )
+    except IntegrityError:  # el mismo folio llegó en paralelo
+        raise duplicate
+
+
+def counter_report(tenant, day):
+    """Compras de mostrador registradas en `day` (fecha local), con totales por cajero."""
+    purchases = list(
+        LoyaltyTransaction.objects.for_tenant(tenant)
+        .filter(kind=LoyaltyTransaction.Kind.EARN, amount__isnull=False, created_at__date=day)
+        .select_related("account__user", "staff")
+        .order_by("-created_at", "-id")
     )
+    by_staff = {}
+    for p in purchases:
+        who = (p.staff.full_name or p.staff.email) if p.staff else "—"
+        row = by_staff.setdefault(who, {"staff": who, "count": 0, "amount": Decimal("0")})
+        row["count"] += 1
+        row["amount"] += p.amount
+    return {
+        "date": day.isoformat(),
+        "count": len(purchases),
+        "amount": str(sum((p.amount for p in purchases), Decimal("0"))),
+        "points": sum(p.points for p in purchases),
+        "by_staff": [{**r, "amount": str(r["amount"])} for r in by_staff.values()],
+        "purchases": [
+            {
+                "created_at": p.created_at,
+                "customer": p.account.user.full_name or p.account.user.email,
+                "amount": str(p.amount),
+                "points": p.points,
+                "reference": p.reference,
+                "staff": (p.staff.full_name or p.staff.email) if p.staff else "—",
+            }
+            for p in purchases
+        ],
+    }

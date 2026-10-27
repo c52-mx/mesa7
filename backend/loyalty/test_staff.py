@@ -108,6 +108,49 @@ class StaffLoyaltyTests(TestCase):
             self.assertEqual(response.status_code, 400, amount)
         self.assertEqual(balance(self.account), 12)
 
+    def earn(self, amount="100", reference="", code=None, user=None):
+        body = {"code": code or self.account.member_code, "amount": amount, "reference": reference}
+        return self.as_user(user or self.staff).post("/api/staff/loyalty/earn/", body, format="json")
+
+    def test_counter_purchase_stores_amount_and_ticket_reference(self):
+        self.assertEqual(self.earn("125.5", " A-100 ").status_code, 200)
+        earned = LoyaltyTransaction.objects.get(reference="A-100")
+        self.assertEqual((str(earned.amount), earned.points), ("125.50", 12))
+
+    def test_same_ticket_reference_cannot_be_registered_twice(self):
+        self.assertEqual(self.earn("100", "T-1").status_code, 200)
+        self.assertEqual(self.earn("100", "T-1").status_code, 400)
+        self.assertEqual(balance(self.account), 12 + 10)
+        self.assertEqual(self.earn("100", "").status_code, 200)  # sin folio no se valida
+        self.assertEqual(self.earn("100", "").status_code, 200)
+
+    def test_same_reference_is_allowed_in_another_tenant(self):
+        other_account = get_or_create_account(self.other, self.visitor)
+        LoyaltyProgram.objects.create(tenant=self.other, spend_per_point=10)
+        owner = User.objects.create_user("jefe@x.com", password="x")
+        Membership.objects.create(user=owner, tenant=self.other, role="owner")
+        self.assertEqual(self.earn("100", "T-1").status_code, 200)
+        self.assertEqual(self.earn("100", "T-1", other_account.member_code, owner).status_code, 200)
+
+    def test_report_totals_by_cashier_for_today_only(self):
+        other_staff = User.objects.create_user("caja2@x.com", password="x", full_name="Luis")
+        Membership.objects.create(user=other_staff, tenant=self.tenant, role="staff")
+        self.earn("100", "T-1")
+        self.earn("50.50", "T-2")
+        self.earn("30", "", user=other_staff)
+        LoyaltyTransaction.objects.create(tenant=self.tenant, account=self.account, points=5, kind="earn", note="viejo")
+        data = self.as_user(self.staff).get("/api/staff/loyalty/report/").json()
+        self.assertEqual((data["count"], data["amount"], data["points"]), (3, "180.50", 18))
+        by_staff = {row["staff"]: (row["count"], row["amount"]) for row in data["by_staff"]}
+        self.assertEqual(by_staff, {"caja@x.com": (2, "150.50"), "Luis": (1, "30.00")})
+        self.assertEqual(data["purchases"][0]["customer"], "Ana Pérez")
+        empty = self.as_user(self.staff).get("/api/staff/loyalty/report/", {"date": "2020-01-01"}).json()
+        self.assertEqual((empty["count"], empty["amount"]), (0, "0"))
+
+    def test_report_validates_date_and_is_staff_only(self):
+        self.assertEqual(self.as_user(self.staff).get("/api/staff/loyalty/report/", {"date": "ayer"}).status_code, 400)
+        self.assertEqual(self.as_user(self.customer).get("/api/staff/loyalty/report/").status_code, 403)
+
     def test_disabled_loyalty_blocks_the_cash_register(self):
         self.tenant.loyalty_enabled = False
         self.tenant.save()
